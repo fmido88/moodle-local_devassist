@@ -1,8 +1,12 @@
 # Developer  Assist #
 
-TODO Describe the plugin shortly here.
+Developer Assistance provides several tools helping developers
 
-TODO Provide more detailed description here.
+- Language string sorter:
+    Automatically sort lang-strings for selected plugin
+- Plugins backup
+    Create a local backup of all additional plugins in your moodle installation and download it as a zip file
+
 
 ## Installing via uploaded ZIP file ##
 

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO describe file blugins_backup
+ * Script to backup all additional plugins in moodle installation
  *
  * @package    local_devassist
  * @copyright  2024 MohammadFarouk <phun.for.physics@gmail.com>
@@ -67,7 +67,6 @@ if ($confirm && confirm_sesskey()) {
             $subdir = str_replace($CFG->dirroot, '', $plugin->rootdir);
 
             $dir = $CFG->dataroot . '/plugins' . $subdir;
-            // check_dir_exists($dir);
             local_devassist_copyr($plugin->rootdir, $dir, $files);
             mtrace($plugin->name . ' has been copied to ' . $dir . "<br>");
             $typecopied++;

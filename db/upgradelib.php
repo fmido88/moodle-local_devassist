@@ -15,17 +15,22 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Plugin upgrade helper functions are defined here.
  *
  * @package     local_devassist
+ * @category    upgrade
  * @copyright   2024 MohammadFarouk <phun.for.physics@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * Helper function used by the upgrade.php file.
+ */
+function local_devassist_helper_function() {
+    global $DB;
 
-$plugin->component = 'local_devassist';
-$plugin->release = '1.0.0';
-$plugin->version = 2024061600;
-$plugin->requires = 2022112800;
-$plugin->maturity = MATURITY_STABLE;
+    // Please note: you can only use raw low level database access here.
+    // Avoid Moodle API calls in upgrade steps.
+    //
+    // For more information please read {@link https://docs.moodle.org/dev/Upgrade_API}.
+}

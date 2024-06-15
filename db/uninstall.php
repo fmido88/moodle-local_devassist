@@ -15,17 +15,18 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Code that is executed before the tables and data are dropped during the plugin uninstallation.
  *
  * @package     local_devassist
- * @copyright   2024 MohammadFarouk <phun.for.physics@gmail.com>
+ * @category    upgrade
+ * @copyright  2024 MohammadFarouk <phun.for.physics@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * Custom uninstallation procedure.
+ */
+function xmldb_local_devassist_uninstall() {
 
-$plugin->component = 'local_devassist';
-$plugin->release = '1.0.0';
-$plugin->version = 2024061600;
-$plugin->requires = 2022112800;
-$plugin->maturity = MATURITY_STABLE;
+    return true;
+}

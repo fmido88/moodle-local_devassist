@@ -15,17 +15,18 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Code to be executed after the plugin's database scheme has been installed is defined here.
  *
  * @package     local_devassist
- * @copyright   2024 MohammadFarouk <phun.for.physics@gmail.com>
+ * @category    upgrade
+ * @copyright  2024 MohammadFarouk <phun.for.physics@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * Custom code to be run on installing the plugin.
+ */
+function xmldb_local_devassist_install() {
 
-$plugin->component = 'local_devassist';
-$plugin->release = '1.0.0';
-$plugin->version = 2024061600;
-$plugin->requires = 2022112800;
-$plugin->maturity = MATURITY_STABLE;
+    return true;
+}

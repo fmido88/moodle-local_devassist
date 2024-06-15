@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO describe file lang_sorter
+ * Script to modify lang files and resort it alphabetically
  *
  * @package    local_devassist
  * @copyright  2024 MohammadFarouk <phun.for.physics@gmail.com>
@@ -43,7 +43,7 @@ if ($data = $mform->get_data()) {
     $info = $pluginman->get_plugin_info($type . "_" . $component);
     $dirpath = $info->rootdir . '/lang';
     $entries = scandir($dirpath);
-
+    $files = [];
     foreach ($entries as $entry) {
         if (in_array($entry, ['.', '..'])) {
             continue;
@@ -77,11 +77,30 @@ if ($data = $mform->get_data()) {
 
         $file = str_replace(["\n ", " \n"], ["\n", "\n"], $file);
         $file = $heading . $file;
-        file_put_contents($filepath, $file);
+        if (file_put_contents($filepath, $file)) {
+            $files[] = $filepath;
+        }
+    }
+
+    if (!empty($files)) {
+        $message = get_string('string_files_success', 'local_devassist');
+        $message .= '<ul>';
+        foreach ($files as $file) {
+            $message .= '<li>' . $file . '</li>';
+        }
+        $message .= '</ul>';
+        $type = 'success';
+    } else {
+        $message = get_string('string_files_nothing', 'local_devassist', $type . "_" . $component);
+        $type = 'error';
     }
 }
 
 echo $OUTPUT->header();
+
+if (!empty($message)) {
+    echo $OUTPUT->notification($message, $type);
+}
 
 $mform->display();
 

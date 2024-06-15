@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO describe file locallib
+ * Helper functions
  *
  * @package    local_devassist
  * @copyright  2024 MohammadFarouk <phun.for.physics@gmail.com>
@@ -27,37 +27,38 @@
  *
  * @param string $source Source path
  * @param string $dest Destination path
+ * @param array $files List of files copied
  * @return bool
  */
 function local_devassist_copyr($source, $dest, &$files) {
     global $CFG;
-    // Simple copy for a file
+    // Simple copy for a file.
     if (is_file($source)) {
         $archivepath = str_replace($CFG->dataroot . '/plugins/', '', $dest);
         $files[$archivepath] = $dest;
         return copy($source, $dest);
     }
 
-    // Make destination directory
+    // Make destination directory.
     if (!is_dir($dest)) {
         mkdir($dest, $CFG->directorypermissions, true);
     }
 
-    // Loop through the folder
+    // Loop through the folder.
     $dir = dir($source);
     while (false !== $entry = $dir->read()) {
-        // Skip pointers
+        // Skip pointers.
         if ($entry == '.' || $entry == '..') {
             continue;
         }
 
-        // Deep copy directories
+        // Deep copy directories.
         if ($dest !== "$source/$entry") {
             local_devassist_copyr("$source/$entry", "$dest/$entry", $files);
         }
     }
 
-    // Clean up
+    // Clean up.
     $dir->close();
     return true;
 }
