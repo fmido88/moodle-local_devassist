@@ -29,6 +29,7 @@ require_admin();
 $url = new moodle_url('/local/devassist/lang_sorter.php', []);
 $PAGE->set_url($url);
 $PAGE->set_context(context_system::instance());
+$PAGE->set_pagelayout('admin');
 
 $title = get_string('lang_sorter', 'local_devassist');
 $PAGE->set_heading($title);
@@ -39,6 +40,8 @@ $mform = new local_devassist\form\lang_sorter();
 if ($data = $mform->get_data()) {
     $type = $data->type;
     $component = $data->$type;
+    $spaces = (bool)($data->spaces ?? false);
+
     $pluginman = core_plugin_manager::instance();
     $info = $pluginman->get_plugin_info($type . "_" . $component);
     $dirpath = $info->rootdir . '/lang';
@@ -68,7 +71,7 @@ if ($data = $mform->get_data()) {
         $file = '';
         $firstletter = 0;
         foreach ($string as $key => $value) {
-            if (stripos($key, $firstletter) !== 0) {
+            if ($spaces && stripos($key, $firstletter) !== 0) {
                 $file .= "\n\n";
                 $firstletter = $key[0];
             }
@@ -76,7 +79,7 @@ if ($data = $mform->get_data()) {
         }
 
         $file = str_replace(["\n ", " \n"], ["\n", "\n"], $file);
-        $file = $heading . $file;
+        $file = $heading . "\n" . $file;
         if (file_put_contents($filepath, $file)) {
             $files[] = $filepath;
         }

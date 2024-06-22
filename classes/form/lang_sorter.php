@@ -16,7 +16,7 @@
 
 namespace local_devassist\form;
 use core_plugin_manager;
-use core_component;
+use local_devassist\common;
 
 defined('MOODLE_INTERNAL') || die();
 global $CFG;
@@ -36,26 +36,13 @@ class lang_sorter extends \moodleform {
         $mform = $this->_form;
         $mform->addElement('header', 'lang_sorter', get_string('lang_sorter', 'local_devassist'));
 
-        $pluginman = core_plugin_manager::instance();
-        $types = $pluginman->get_plugin_types();
+        $mform->addElement('html', common::get_backup_warning());
 
-        $components = [];
-        foreach ($types as $component => $path) {
-            $components[$component] = $pluginman->plugintype_name($component);
-        }
+        common::add_plugins_selection_options($mform);
 
-        $mform->addElement('select', 'type', get_string('plugin_type', 'local_devassist'), $components);
-        foreach ($components as $type => $name) {
-            $plugins = $pluginman->get_plugins_of_type($type);
-            $options = [];
-            foreach ($plugins as $base) {
-                $options[$base->name] = $base->displayname;
-            }
+        $mform->addElement('checkbox', 'spaces', get_string('letters_spaces', 'local_devassist'));
+        $mform->setDefault('spaces', 1);
 
-            $mform->addElement('select', $type, $name, $options);
-            $mform->hideIf($type, 'type', 'neq', $type);
-        }
-
-        $this->add_action_buttons();
+        $this->add_action_buttons(false);
     }
 }

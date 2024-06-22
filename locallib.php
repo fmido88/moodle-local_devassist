@@ -62,3 +62,5 @@ function local_devassist_copyr($source, $dest, &$files) {
     $dir->close();
     return true;
 }
+
+

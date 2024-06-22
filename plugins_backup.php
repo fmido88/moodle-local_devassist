@@ -91,6 +91,7 @@ if ($confirm && confirm_sesskey()) {
 
 $PAGE->set_url($url);
 $PAGE->set_context(context_system::instance());
+$PAGE->set_pagelayout('admin');
 
 $title = get_string('plugins_backup', 'local_devassist');
 $PAGE->set_heading($title);
