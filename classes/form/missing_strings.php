@@ -119,7 +119,7 @@ class missing_strings extends \moodleform {
             list($identifier, $component) = explode('///', $string, 2);
             $noteng = $this->lang !== 'en';
             if ($component == $this->fullcomponent) {
-                $mform->addElement('text', 'newstring__' . $identifier, $identifier, ['size' => 100]);
+                $mform->addElement('textarea', 'newstring__' . $identifier, $identifier, ['size' => 100]);
                 $mform->setType('newstring__' . $identifier, PARAM_TEXT);
                 if ($noteng) {
                     $mform->addElement('static', $identifier . "__en",
@@ -173,13 +173,14 @@ class missing_strings extends \moodleform {
         if (file_exists($filepath)) {
             $content = file_get_contents($filepath);
         } else {
-            $content = "<?php\n";
+            $content = "<?php" . "\n";
             $content .= common::get_standard_moodle_boilerplate();
             $content .= common::get_default_file_doc_block($fullcomponent);
             $content .= common::get_moodle_internal_check();
         }
 
-        $content .= "\n";
+        $content = str_replace(PHP_EOL, "\n", $content);
+        $content .= "" . "\n";
 
         $i = 0;
         foreach ($data as $key => $value) {

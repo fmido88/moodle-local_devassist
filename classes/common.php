@@ -30,28 +30,29 @@ class common {
      * @return string
      */
     public static function get_standard_moodle_boilerplate() {
+        "\n";
         return ""
-        . "// This file is part of Moodle - http://moodle.org/\n"
-        . "//\n"
-        . "// Moodle is free software: you can redistribute it and/or modify\n"
-        . "// it under the terms of the GNU General Public License as published by\n"
-        . "// the Free Software Foundation, either version 3 of the License, or\n"
-        . "// (at your option) any later version.\n"
-        . "//\n"
-        . "// Moodle is distributed in the hope that it will be useful,\n"
-        . "// but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-        . "// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-        . "// GNU General Public License for more details.\n"
-        . "//\n"
-        . "// You should have received a copy of the GNU General Public License\n"
-        . "// along with Moodle.  If not, see <http://www.gnu.org/licenses/>\n\n";
+        . "// This file is part of Moodle - http://moodle.org/" . "\n"
+        . "//"."\n"
+        . "// Moodle is free software: you can redistribute it and/or modify"."\n"
+        . "// it under the terms of the GNU General Public License as published by"."\n"
+        . "// the Free Software Foundation, either version 3 of the License, or"."\n"
+        . "// (at your option) any later version."."\n"
+        . "//"."\n"
+        . "// Moodle is distributed in the hope that it will be useful,"."\n"
+        . "// but WITHOUT ANY WARRANTY; without even the implied warranty of"."\n"
+        . "// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the" . "\n"
+        . "// GNU General Public License for more details." . "\n"
+        . "//" . "\n"
+        . "// You should have received a copy of the GNU General Public License" . "\n"
+        . "// along with Moodle.  If not, see <http://www.gnu.org/licenses/>." . "\n" . "\n";
     }
     /**
      * Get moodle internal check to be written in top of a php file.
      * @return string
      */
     public static function get_moodle_internal_check() {
-        return "defined('MOODLE_INTERNAL') || die();\n\n";
+        return "defined('MOODLE_INTERNAL') || die();" . "\n" . "\n";
     }
     /**
      * Get the file doc block.
@@ -61,24 +62,24 @@ class common {
      * @param string $description
      */
     public static function get_file_doc_block($package = '', $copyright = '', $license = '', $description = '') {
-        $return = "/**\n";
+        $return = "/**" . "\n";
         if (!empty($description)) {
             $return .= $description;
         } else {
             $return .= " * Add description here";
         }
-        $return .= " *\n";
+        $return .= " *" . "\n";
 
         if (!empty($package)) {
-            $return .= " * @package    $package\n";
+            $return .= " * @package    $package" . "\n";
         }
         if (!empty($copyright)) {
-            $return .= " * @copyright  $copyright\n";
+            $return .= " * @copyright  $copyright" . "\n";
         }
         if (!empty($license)) {
-            $return .= " * @license    $license\n";
+            $return .= " * @license    $license" . "\n";
         }
-        $return .= " */\n";
+        $return .= " */" . "\n";
         return $return;
     }
     /**

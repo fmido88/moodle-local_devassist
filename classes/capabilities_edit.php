@@ -153,15 +153,15 @@ class capabilities_edit {
             foreach ($capability as $key => $value) {
                 $output .= '        \'' . $key . '\' => ';
                 if (is_array($value)) {
-                    $output .= "[\n";
+                    $output .= "[" . "\n";
                     foreach ($value as $v => $cap) {
-                        $output .= "            '$v' => $cap,\n";
+                        $output .= "            '$v' => $cap," . "\n";
                     }
-                    $output .= "        ],\n";
+                    $output .= "        ]," . "\n";
                 } else if (in_array($key, ['riskbitmask', 'contextlevel'])) {
-                    $output .= $value . ",\n";
+                    $output .= $value . "," . "\n";
                 } else {
-                    $output .= '\'' . $value . "',\n";
+                    $output .= '\'' . $value . "'," . "\n";
                 }
             }
             $output .= '    ],' . "\n";
@@ -206,9 +206,9 @@ class capabilities_edit {
             $content = file_get_contents($this->filepath);
 
             $position = strpos($content, '$capabilities');
-            return trim(substr($content, 0, $position)) . "\n\n";
+            return trim(substr($content, 0, $position)) . "\n" . "\n";
         }
-        $header = "<?php\n";
+        $header = "<?php" . "\n";
         $header .= common::get_standard_moodle_boilerplate();
         $header .= common::get_default_file_doc_block($this->component);
         $header .= common::get_moodle_internal_check();

@@ -94,9 +94,9 @@ class missing_strings {
 
         $this->special = [
             'access'   => $this->rootpath . "/db/access.php",
-            'cashes'   => $this->rootpath . "/db/cashes.php",
+            'caches'   => $this->rootpath . "/db/caches.php",
             'messages' => $this->rootpath . "/db/messages.php",
-            'privacy'  => $this->rootpath . "/classes/privacy/provides.php",
+            'privacy'  => $this->rootpath . "/classes/privacy/provider.php",
         ];
 
         $langfile = $this->rootpath . "/lang/$lang/$component.php";
@@ -186,7 +186,7 @@ class missing_strings {
                 switch ($source) {
                     case $this->special['access']:
                         return $this->look_for_access_strings($source);
-                    case $this->special['cashes']:
+                    case $this->special['caches']:
                         return $this->look_for_cache_def($source);
                     case $this->special['messages']:
                         return $this->look_for_msg_providers($source);
@@ -195,8 +195,13 @@ class missing_strings {
                     default:
                         return $this->look_for_get_string($source);
                 }
+            } else if (strpos($source, '.mustache') == (strlen($source) - 9)) {
+
+                return $this->scan_mustache($source);
+
+            } else {
+                return;
             }
-            return;
         }
 
         // Loop through the folder.
@@ -216,6 +221,36 @@ class missing_strings {
     }
 
     /**
+     * Scan a mustache file for strings.
+     * @param string $source
+     * @return void
+     */
+    protected function scan_mustache($source) {
+        $content = file_get_contents($source);
+
+        // Remove comments and white spaces.
+        $content = preg_replace('/{{!--.*?--}}/s', '', $content);
+        $content = preg_replace('/\s+/', '', $content);
+
+        preg_match_all('/{{#str}}(.*?){{\/str}}/', $content, $matches);
+
+        foreach ($matches[1] as $string) {
+            $parts = explode(',', $string);
+
+            if (count($parts) < 2) {
+                continue;
+            }
+
+            $identifier = clean_param(trim($parts[0]), PARAM_STRINGID);
+            $component = clean_param(trim($parts[1]), PARAM_COMPONENT);
+
+            if ($component == $this->component) {
+                $this->check_string_exist($identifier);
+            }
+        }
+    }
+
+    /**
      * Look for required strings by privacy provider and see of any are missing.
      * @param string $file the file path /classes/privacy/provider.php
      * @return void
@@ -223,9 +258,13 @@ class missing_strings {
     protected function look_for_privacy_providers($file) {
         require_once($file);
         $class = $this->component . "\privacy\provider";
+        if (!class_exists($class)) {
+            return;
+        }
+
         if (method_exists($class, 'get_reason')) {
             $this->check_string_exist($class::get_reason());
-        } else {
+        } else if (method_exists($class, 'get_metadata')) {
             $collection = new \core_privacy\local\metadata\collection($this->component);
             $collection = $class::get_metadata($collection);
             $collections = $collection->get_collection();
@@ -233,7 +272,7 @@ class missing_strings {
                 $this->check_string_exist($type->get_summary());
                 $fields = $type->get_privacy_fields();
                 foreach ($fields as $field) {
-                    if (!empty($filed)) {
+                    if (!empty($field)) {
                         $this->check_string_exist($field);
                     }
                 }

@@ -64,6 +64,7 @@ if ($data = $mform->get_data()) {
         $position = strpos($content, '$string');
         $heading = trim(substr($content, 0, $position));
 
+        $heading = str_replace(PHP_EOL, "\n", $heading);
         unset($content);
 
         ksort($string, SORT_STRING);
@@ -72,13 +73,13 @@ if ($data = $mform->get_data()) {
         $firstletter = 0;
         foreach ($string as $key => $value) {
             if ($spaces && stripos($key, $firstletter) !== 0) {
-                $file .= "\n\n";
+                $file .= "\n" . "\n";
                 $firstletter = $key[0];
             }
-            $file .= '$string[\''.$key.'\'] = \''.str_replace('\'', '\\\'', $value).'\';' . "\n";
+            $file .= '$string[\''.$key.'\'] = \''.str_replace('\'', '\\\'', $value).'\';' . "" . "\n";
         }
 
-        $file = str_replace(["\n ", " \n"], ["\n", "\n"], $file);
+        $file = str_replace(["\n ", " \n", " ". PHP_EOL, PHP_EOL . " ", PHP_EOL], "\n", $file);
         $file = $heading . "\n" . $file;
         if (file_put_contents($filepath, $file)) {
             $files[] = $filepath;

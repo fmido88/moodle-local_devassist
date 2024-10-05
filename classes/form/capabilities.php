@@ -84,9 +84,10 @@ class capabilities extends \moodleform {
         $plugininfo = $pluginman->get_plugin_info($this->component);
         $mform->addElement('html', common::get_backup_warning($plugininfo->rootdir . '/db/access.php'));
 
-        $capabilities = $this->get_exited_capabilities();
+        $capabilities = $this->get_existed_capabilities();
 
-        $i = $this->optional_param('i', count($capabilities) + 1, PARAM_INT);
+        $i = $this->optional_param('i', 1, PARAM_INT);
+        $i = max($i, count($capabilities) + 1);
         $addmore = optional_param('addmore', false, PARAM_BOOL);
         if ($addmore) {
             $i++;
@@ -146,7 +147,7 @@ class capabilities extends \moodleform {
      * Load the capabilities existed in the plugin already if any.
      * @return array
      */
-    protected function get_exited_capabilities() {
+    protected function get_existed_capabilities() {
         $capabilities = [];
 
         $pluginman = \core_plugin_manager::instance();
@@ -305,11 +306,12 @@ class capabilities extends \moodleform {
         if (isset($this->permissionsoptions)) {
             return $this->permissionsoptions;
         }
+
         $this->permissions = [];
         $allpermissions = [
             CAP_INHERIT  => 'notset',
             CAP_ALLOW    => 'allow',
-            CAP_PREVENT  => 'prevent' ,
+            CAP_PREVENT  => 'prevent',
             CAP_PROHIBIT => 'prohibit',
         ];
 
@@ -317,6 +319,7 @@ class capabilities extends \moodleform {
         foreach ($allpermissions as $value => $permname) {
             $this->permissions[$value] = get_string($permname, 'core_role');
         }
+
         return $this->permissions;
     }
     /**
@@ -334,5 +337,19 @@ class capabilities extends \moodleform {
             }
         }
         return $risks;
+    }
+
+    /**
+     * Validation.
+     * @param array $data
+     * @param array $files
+     * @return string[]
+     */
+    public function validation($data, $files) {
+        $errors = [];
+        if (!empty($data['addmore'])) {
+            $errors['i'] = 'more added'; // Never shown.
+        }
+        return $errors;
     }
 }
