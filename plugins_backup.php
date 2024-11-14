@@ -32,15 +32,16 @@ $confirm = optional_param('confirm', false, PARAM_BOOL);
 $download = optional_param('download', false, PARAM_BOOL);
 
 if ($download && confirm_sesskey()) {
+    $tempdir = make_temp_directory('local_devassist');
     header('Content-Description: File Transfer');
     header('Content-Type: application/octet-stream');
     header('Content-Disposition: attachment; filename="plugins.zip"');
     header('Expires: 0');
     header('Cache-Control: must-revalidate');
     header('Pragma: public');
-    header('Content-Length: ' . filesize($CFG->dataroot . '/plugins.zip'));
-    readfile($CFG->dataroot . '/plugins.zip');
-    unlink($CFG->dataroot . '/plugins.zip');
+    header('Content-Length: ' . filesize($tempdir . '/plugins.zip'));
+    readfile($tempdir . '/plugins.zip');
+    unlink($tempdir . '/plugins.zip');
     exit;
 }
 
@@ -52,6 +53,7 @@ if ($confirm && confirm_sesskey()) {
 
     $count = 0;
     $files = [];
+    $tempdir = make_temp_directory('local_devassist');
     foreach ($plugininfo as $type => $plugins) {
         mtrace('start copying '. $type . "<br>");
         $typecopied = 0;
@@ -66,7 +68,7 @@ if ($confirm && confirm_sesskey()) {
             mtrace('start copying '. $plugin->name . "<br>");
             $subdir = str_replace($CFG->dirroot, '', $plugin->rootdir);
 
-            $dir = $CFG->dataroot . '/plugins' . $subdir;
+            $dir = $tempdir . '/plugins' . $subdir;
             local_devassist_copyr($plugin->rootdir, $dir, $files);
             mtrace($plugin->name . ' has been copied to ' . $dir . "<br>");
             $typecopied++;
@@ -74,11 +76,12 @@ if ($confirm && confirm_sesskey()) {
         mtrace($typecopied . " plugins has been copied of type " . $type . "<br>");
     }
     mtrace($count . ' plugins has been copied.' . "<br>");
-    mtrace('All plugins copied successfully to ' . $CFG->dataroot . '/plugins' . "<br>");
+    mtrace('All plugins copied successfully to ' . $tempdir . '/plugins' . "<br>");
 
     $packer = get_file_packer('application/zip');
-    $packer->archive_to_pathname($files, $CFG->dataroot . '/plugins.zip');
-    remove_dir($CFG->dataroot . '/plugins');
+
+    $packer->archive_to_pathname($files, $tempdir . '/plugins.zip');
+    remove_dir($tempdir . '/plugins');
 
     $url->params(['download' => true, 'sesskey' => sesskey()]);
     echo html_writer::link($url, get_string('download'), ['id' => 'download']);
