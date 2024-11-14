@@ -22,7 +22,7 @@ use core_string_manager;
  * Class missing_strings
  *
  * @package    local_devassist
- * @copyright  2024 YOUR NAME <your@email.com>
+ * @copyright  2024 Mohammad Farouk <phun.for.physics@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class missing_strings {

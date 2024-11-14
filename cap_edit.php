@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO describe file cap_edit
+ * Edit capabilities
  *
  * @package    local_devassist
  * @copyright  2024 Mohammad Farouk <phun.for.physics@gmail.com>
