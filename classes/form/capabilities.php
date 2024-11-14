@@ -17,7 +17,6 @@
 namespace local_devassist\form;
 
 use local_devassist\common;
-use tool_certificate\plugin_manager;
 
 defined('MOODLE_INTERNAL') || die();
 
