@@ -34,7 +34,7 @@ function local_devassist_copyr($source, $dest, &$files) {
     global $CFG;
     // Simple copy for a file.
     if (is_file($source)) {
-        $archivepath = str_replace($CFG->dataroot . '/plugins/', '', $dest);
+        $archivepath = str_replace(make_temp_directory('local_devassist'), '', $dest);
         $files[$archivepath] = $dest;
         return copy($source, $dest);
     }

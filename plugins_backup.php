@@ -75,6 +75,7 @@ if ($confirm && confirm_sesskey()) {
         }
         mtrace($typecopied . " plugins has been copied of type " . $type . "<br>");
     }
+
     mtrace($count . ' plugins has been copied.' . "<br>");
     mtrace('All plugins copied successfully to ' . $tempdir . '/plugins' . "<br>");
 
