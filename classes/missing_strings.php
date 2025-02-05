@@ -147,6 +147,11 @@ class missing_strings {
         if ($this->type == 'paygw') {
             $this->check_string_exist('gatewayname');
             $this->check_string_exist('gatewaydescription');
+        } else if ($this->type == 'mod') {
+            $this->check_string_exist('modulename');
+            $this->check_string_exist('modulename_help');
+            $this->check_string_exist('modulenameplural');
+            $this->check_string_exist('modulename_link');
         }
     }
     /**
