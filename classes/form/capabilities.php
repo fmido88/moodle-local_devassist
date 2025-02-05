@@ -61,6 +61,7 @@ class capabilities extends \moodleform {
      * @var array
      */
     protected $permissions;
+
     /**
      * Form definition.
      */
@@ -105,7 +106,7 @@ class capabilities extends \moodleform {
 
         $mform->addElement('hidden', 'i');
         $mform->setType('i', PARAM_INT);
-        $mform->setDefault('i', $i);
+        $mform->setConstant('i', $i);
 
         $mform->addElement('hidden', 'type');
         $mform->setType('type', PARAM_ALPHANUMEXT);
@@ -314,7 +315,6 @@ class capabilities extends \moodleform {
             CAP_PROHIBIT => 'prohibit',
         ];
 
-        $this->strperms = [];
         foreach ($allpermissions as $value => $permname) {
             $this->permissions[$value] = get_string($permname, 'core_role');
         }
