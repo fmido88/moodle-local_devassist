@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO describe file testcode
+ * A page to evaluate PHP code.
  *
  * @package    local_devassist
  * @copyright  2025 Mohammad Farouk <phun.for.physics@gmail.com>
