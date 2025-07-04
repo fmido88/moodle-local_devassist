@@ -125,20 +125,27 @@ class common {
      * Add plugin selection elements to a form.
      *
      * @param \MoodleQuickForm $mform
+     * @param string|null $type
+     * @return void
      */
-    public static function add_plugins_selection_options(&$mform) {
+    public static function add_plugins_selection_options(&$mform, $type = null) {
         $pluginman = core_plugin_manager::instance();
         $types = $pluginman->get_plugin_types();
 
         $components = [];
         $options = [];
         foreach ($types as $component => $path) {
+            if ($type && $component !== $type) {
+                continue;
+            }
+
             $components[$component] = $pluginman->plugintype_name($component) . " ($component)";
             $plugins = $pluginman->get_plugins_of_type($component);
 
             $options[$component] = [];
             foreach ($plugins as $base) {
                 if ($base->is_standard()) {
+                    // We don't miss with standard plugins.
                     continue;
                 }
                 $options[$component][$base->name] = $base->displayname . " ({$component}_{$base->name})";

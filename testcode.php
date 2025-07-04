@@ -31,12 +31,16 @@ $url = new moodle_url('/local/devassist/testcode.php', []);
 $PAGE->set_url($url);
 $PAGE->set_context(context_system::instance());
 
-$PAGE->set_heading('Evaluate php code');
+$PAGE->set_heading(get_string('evaluatephpcode', 'local_devassist'));
+
+local_devassist_display_developer_confirmation();
+
 $PAGE->requires->css(new moodle_url('/local/devassist/codemirror.css'));
 $code = optional_param('code', null, PARAM_RAW);
 
 try {
     ob_start();
+    // phpcs:ignore moodle.PHP.ForbiddenTokens.Found
     eval($code);
     $output = ob_get_clean();
 } catch (Throwable $e) {
@@ -44,6 +48,8 @@ try {
 }
 
 echo $OUTPUT->header();
+
+local_devassist_add_warning_message(true);
 
 $mform = new MoodleQuickForm('evaluate', 'post', $url, '', ['class' => 'full-width-labels']);
 
@@ -57,8 +63,6 @@ $mform->addElement('submit', 'eval', 'Evaluate');
 $mform->display();
 
 $PAGE->requires->js_call_amd('local_devassist/editor', 'init', ['php']);
-
-
 
 echo $OUTPUT->box($output);
 
