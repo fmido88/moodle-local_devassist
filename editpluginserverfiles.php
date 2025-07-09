@@ -32,11 +32,13 @@ $url = new moodle_url('/local/devassist/editpluginserverfiles.php', []);
 $PAGE->set_url($url);
 $PAGE->set_context(context_system::instance());
 
-$PAGE->set_heading(get_string('editpluginserverfiles', 'local_devassist'));
+$title = get_string('editpluginserverfiles', 'local_devassist');
+$PAGE->set_heading($title);
+$PAGE->set_title($title);
+
+$PAGE->set_pagelayout('admin');
 
 local_devassist_display_developer_confirmation();
-
-$PAGE->requires->css(new moodle_url('/local/devassist/codemirror.css'));
 
 $file   = optional_param('file', null, PARAM_PATH);
 $type   = optional_param('type', null, PARAM_PLUGIN);
@@ -127,7 +129,11 @@ if ($file) {
     $mform->setDefault('code', file_get_contents("{$CFG->dirroot}{$file}"));
     $submit = 'savechanges';
 
-    $PAGE->requires->js_call_amd('local_devassist/editor', 'init', [pathinfo($file, PATHINFO_EXTENSION)]);
+    $langtype = pathinfo($file, PATHINFO_EXTENSION);
+    if ($langtype === 'php') {
+        $langtype = 'filephp';
+    }
+    $PAGE->requires->js_call_amd('local_devassist/editor', 'init', [$langtype]);
 }
 
 $mform->addElement('hidden', 'sesskey', sesskey());

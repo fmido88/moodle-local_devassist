@@ -14,46 +14,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO describe module editor
+ * Code text editor.
  *
  * @module     local_devassist/editor
  * @copyright  2025 Mohammad Farouk <phun.for.physics@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-import CodeMirror from "local_devassist/codemirror";
-import $ from "jquery";
+import {createEditor} from "./codemirror";
+import $ from 'jquery';
 
 export const init = function(mode = 'php') {
-    var textarea = $('textarea[name="code"]');
-    if (textarea[0]) {
-
-        // eslint-disable-next-line no-console
-        console.log(mode);
-        switch (mode) {
-            case 'php':
-                mode = {name: "php", startOpen: true};
-                break;
-            case 'js':
-                mode = 'javascript';
-                break;
-            case 'mustache':
-                mode = 'php';
-                break;
-            default:
-        }
-
-        let phpCodeMirror = CodeMirror.fromTextArea(textarea[0], {
-            lineNumbers: true,
-            mode: mode,
-            tabSize: 4,
-            lineWrapping: true,
-            indentWithTabs: false,
-            spellcheck: true,
-            theme: "vscode-dark",
-        });
-        phpCodeMirror.setSize('100%', '500px');
-        phpCodeMirror.on('change', function(cm) {
-            cm.save();
+    const textarea = $('textarea[name="code"]')[0];
+    if (textarea) {
+        createEditor({
+            target: textarea,
+            content: textarea.value,
+            mode: mode
         });
     }
 };

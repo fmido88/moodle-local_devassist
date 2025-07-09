@@ -35,16 +35,32 @@ $PAGE->set_heading(get_string('evaluatephpcode', 'local_devassist'));
 
 local_devassist_display_developer_confirmation();
 
-$PAGE->requires->css(new moodle_url('/local/devassist/codemirror.css'));
 $code = optional_param('code', null, PARAM_RAW);
 
-try {
-    ob_start();
-    // phpcs:ignore moodle.PHP.ForbiddenTokens.Found
-    eval($code);
-    $output = ob_get_clean();
-} catch (Throwable $e) {
-    $output = local_devassist_test_exception_handler($e);
+$output = '';
+if ($code) {
+    $tr = $DB->start_delegated_transaction();
+    try {
+        ob_start();
+        $eval = function($cod) {
+            $code = fullclone($cod);
+            // Using eval() is very dangerous but the admin confirmed they are a developer
+            // and know what they doing.
+            // phpcs:ignore moodle.PHP.ForbiddenTokens.Found
+            eval($code);
+        };
+        $eval($code);
+        $tr->allow_commit();
+        $output .= ob_get_clean();
+    } catch (Throwable $e) {
+        try {
+            $tr->rollback($e);
+            // Shouldn't be reached.
+            $output .= local_devassist_test_exception_handler($e);
+        } catch (Throwable $e) {
+            $output .= local_devassist_test_exception_handler($e);
+        }
+    }
 }
 
 echo $OUTPUT->header();
