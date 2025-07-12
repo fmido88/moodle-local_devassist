@@ -1,0 +1,66 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+namespace local_devassist\form;
+
+use local_devassist\local\restore\restore_base;
+
+defined('MOODLE_INTERNAL') || die();
+global $CFG;
+require_once($CFG->libdir."/formslib.php");
+/**
+ * Restoring form by uploading a zip file.
+ *
+ * @package    local_devassist
+ * @copyright  2025 Mohammad Farouk <phun.for.physics@gmail.com>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class restore extends \moodleform {
+    /**
+     * Form definition
+     * @return void
+     */
+    protected function definition() {
+        $mform = $this->_form;
+        $mform->addElement('header', 'general', get_string('restore', 'local_devassist'));
+        $mform->addHelpButton('general', 'restore', 'local_devassist');
+
+        $mform->addElement('filepicker', 'zipfile', get_string('uploadzipfile', 'local_devassist'),
+            null, ['accepted_types' => '.zip', 'maxbytes' => 0]);
+        $mform->addHelpButton('zipfile', 'uploadzipfile', 'local_devassist');
+        $mform->addRule('zipfile', null, 'required', null, 'client');
+
+        $options = restore_base::get_options();
+        $mform->addElement('select', 'type', get_string('restore_type', 'local_devassist'), $options);
+        $mform->addHelpButton('type', 'restore_type', 'local_devassist');
+
+        $mform->addElement('static', 'restore_plugins',
+                $options['plugins'], get_string('restore_plugins_help', 'local_devassist'));
+        $mform->hideIf('restore_plugins', 'type', 'neq', 'plugins');
+
+        $mform->addElement('static', 'restore_database_tables',
+                $options['database_tables'], get_string('restore_database_tables_help', 'local_devassist'));
+        $mform->hideIf('restore_database_tables', 'type', 'neq', 'database_tables');
+
+        $mform->addElement('static', 'restore_files',
+                $options['files'], get_string('restore_files_help', 'local_devassist'));
+        $mform->hideIf('files', 'type', 'neq', 'files');
+
+        backup::add_maintenance_note($mform);
+
+        $this->add_action_buttons(false, get_string('restorefromzipfile', 'local_devassist'));
+    }
+}
