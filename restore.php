@@ -16,7 +16,7 @@
 
 use local_devassist\local\restore\restore_base;
 /**
- * TODO describe file restore
+ * Restore page.
  *
  * @package    local_devassist
  * @copyright  2025 Mohammad Farouk <phun.for.physics@gmail.com>
