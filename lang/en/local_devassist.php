@@ -24,9 +24,25 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
+
+
 $string['addmore'] = 'Add more';
+
+
+$string['backup_confirm'] = 'Your are about to create backup for the selected type of backup and download it as a zip file, this will take some time and get downloaded automatically after it.';
+$string['backup_database_tables'] = 'Backup database records';
 $string['backup_file_warning'] = 'WARNING! This action will change the content of the file {$a} Make sure you have a backup from it';
+$string['backup_files'] = 'Backup files';
 $string['backup_general_warning'] = 'WARNING! Please back up the plugin files before submitting the form as these actions may change some of its files content';
+$string['backup_plugins'] = 'Backup plugins';
+$string['backup_type'] = 'What you want to backup?';
+$string['backup_type_help'] = 'Select what you want to backup:
+Plugins: backup all additional plugins in a single zip file.
+Database tables: All database tables except log store.
+Files: all moodle data saved files in the system except draft and assignment feedbacks.';
+$string['backups'] = 'Backup plugins, files or database records.';
+
+
 $string['cannot_write_file'] = 'Error while try to write the lang file';
 $string['cap_edit'] = 'Edit capabilities on access.php file';
 $string['cap_edit_component'] = 'Edit capabilities for component ({$a})';
@@ -37,6 +53,8 @@ $string['capno'] = 'Capability {$a}';
 $string['captype'] = 'Capability type';
 $string['clonepermissionsfrom'] = 'Clone permission from:';
 $string['contextlevel'] = 'Context Level';
+
+
 $string['def_copyright'] = 'Default copyright for new files';
 $string['def_copyright_desc'] = 'If you left it empty the name of the editing user and email will be put by default.';
 $string['def_license'] = 'Default license for new file';
@@ -47,28 +65,63 @@ $string['developerconfirmationtext'] = 'Make sure you know what are you doing be
 This page could change the plugin file content, so make sure that you have a backup of these files before doing anything. ';
 $string['developerwarning'] = 'This page could change the plugin file content or database, so make sure that you have a backup of these files before doing anything.';
 $string['devtools'] = 'Developer Assistant Tools';
+
+
 $string['editpluginserverfiles'] = 'Edit plugin php files';
 $string['evaluatephpcode'] = 'Evaluate a php code';
+
+
 $string['file_edit_error'] = 'Error while try to edit the file';
 $string['file_edit_success'] = 'File edited successfully';
 $string['fileupdated'] = 'The file {$a->file} has been updated successfully.
 A backup file generated in {$a->backup}';
+
+
 $string['lang_sorter'] = 'Language strings sorter';
 $string['language'] = 'Language';
 $string['language_help'] = 'Select the language required to search the lang strings, WARNING you should search for the English language first';
 $string['letters_spaces'] = 'Add line spaces between different letters';
+
+
+$string['maintenance_warning'] = 'When the process started the site will enter the maintenance mode and will return after completion, the process may take a long time. Make sure to not interrupt the process by closing the window or refreshing it.';
 $string['missing_lang_strings'] = 'Search for missing language string and make a local translation';
 $string['missing_strings'] = 'Missing strings for component ({$a})';
+
+
 $string['no_missing_strings'] = 'No missing strings for component ({$a})';
+
+
 $string['plugin_backup_confirm'] = 'Your are about to create backup of all additional plugins and download it as a zip file, this will take some time and downloaded automatically after it.';
 $string['plugin_type'] = 'Plugin type';
 $string['pluginname'] = 'Developer  Assist';
 $string['plugins_backup'] = 'Plugins backup';
 $string['privacy:metadata'] = 'The Developer assist plugin does not store any personal data.';
+
+
 $string['read'] = 'Capability Read';
+$string['restore'] = 'Restore';
+$string['restore_database_tables'] = 'Restore database records';
+$string['restore_database_tables_help'] = 'In order to restore database records, the moodle installation should be new and has no records added already, if the table not exist it will not be restored as this tool restores records only.
+Cation: This is still experimental tool and must be used with cation, any existence record will be overridden.';
+$string['restore_files'] = 'Restore files';
+$string['restore_files_help'] = 'Restoring all files from a single zip file, this will not work until the database table files is restored first.';
+$string['restore_help'] = 'Restore files, plugins and database tables that is backed up by this plugin in another moodle installation.';
+$string['restore_plugins'] = 'Restore plugins';
+$string['restore_plugins_help'] = 'The plugins will be uploaded directly to the system files, if one of the plugins already exists it will be overridden which may case misbehave in some cases, so make sure that all plugins need to be restored is not installed in this installation.';
+$string['restore_type'] = 'What to restore?';
+$string['restore_type_help'] = 'Select what you want to restore and it should match ';
+$string['restorefromzipfile'] = 'Restore from zip file';
 $string['riskbitunmask'] = 'Risks';
+
+
 $string['search_missing_strings'] = 'Select component to look for missing strings';
 $string['string_files_nothing'] = 'No lang files found for component {$a} or there is no permission to read or write these files';
 $string['string_files_success'] = 'Language files successfully sorted:';
 $string['strings_added_success'] = '{$a} strings added successfully.';
+
+
+$string['uploadzipfile'] = 'Upload zip file';
+$string['uploadzipfile_help'] = 'The uploaded zip file should be created by the same plugin during the backup process.';
+
+
 $string['write'] = 'Capability Write';

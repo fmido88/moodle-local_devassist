@@ -32,6 +32,7 @@ if ($hassiteconfig) {
         get_string('devtools', 'local_devassist'),
         false
     ));
+
     // Lang string sorter.
     $langsorter = new admin_externalpage(
         'local_devassest_lang_sorter',
@@ -48,13 +49,21 @@ if ($hassiteconfig) {
     );
     $ADMIN->add('local_devassist_pages', $missinglang);
 
-    // Plugins backup.
-    $pluginsbackup = new admin_externalpage(
-        'local_devassist_plugins_backup',
-        get_string('plugins_backup', 'local_devassist'),
-        new moodle_url('/local/devassist/plugins_backup.php')
+    // Backups.
+    $backups = new admin_externalpage(
+        'local_devassist_backups',
+        get_string('backups', 'local_devassist'),
+        new moodle_url('/local/devassist/backup.php')
     );
-    $ADMIN->add('local_devassist_pages', $pluginsbackup);
+    $ADMIN->add('local_devassist_pages', $backups);
+
+    // Restore.
+    $restore = new admin_externalpage(
+        'local_devassist_restore',
+        get_string('restore', 'local_devassist'),
+        new moodle_url('/local/devassist/restore.php')
+    );
+    $ADMIN->add('local_devassist_pages', $restore);
 
     // Edit capabilities in access.php files.
     $capedit = new admin_externalpage(
