@@ -41,6 +41,7 @@ class backup_database_tables extends backup_base {
         'config_log',
         'sessions',
     ];
+
     /**
      * Add tables to ignore list.
      * @param string $table
@@ -52,6 +53,23 @@ class backup_database_tables extends backup_base {
         } else {
             $this->ignoredtables[] = $table;
         }
+    }
+
+    /**
+     * Getter for the array of ignored tables.
+     * @return array
+     */
+    public function get_ignored_tables() {
+        return $this->ignoredtables;
+    }
+
+    /**
+     * Setter for ignored tables names
+     * @param array $tables
+     * @return void
+     */
+    public function set_ignored_tables(array $tables) {
+        $this->ignoredtables = $tables;
     }
 
     /**
@@ -75,7 +93,30 @@ class backup_database_tables extends backup_base {
                 continue;
             }
 
-            $records = $DB->get_records($table);
+            if ($table == 'files') {
+                $selects = [];
+                $params  = [];
+
+                $i = 0;
+
+                foreach ($this->excludedfileareas as $array) {
+                    $params["comp{$i}"] = $array[0];
+                    $sel                = "component != :comp{$i}";
+
+                    if (!empty($array[1])) {
+                        $params["fa{$i}"] = $array[1];
+                        $sel              = "({$sel} AND filearea != :fa{$i})";
+                    }
+                    $selects[] = $sel;
+                    $i++;
+                }
+                $select = implode(' OR ', $selects);
+
+                $records = $DB->get_records_select('files', $select, $params);
+            } else {
+                $records = $DB->get_records($table);
+            }
+
             if (empty($records)) {
                 $this->trace("The table $table is empty of records and will not be backed up...", 1);
                 // No need to backup empty table.

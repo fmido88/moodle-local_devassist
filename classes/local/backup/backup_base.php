@@ -17,6 +17,7 @@
 namespace local_devassist\local\backup;
 
 use core\exception\coding_exception;
+use local_devassist\form\backup;
 use local_devassist\local\backup_restore_base;
 use local_devassist\local\zip_progress;
 
@@ -40,6 +41,25 @@ abstract class backup_base extends backup_restore_base {
      */
     protected array $archivedzips = [];
 
+    /**
+     * list of pairs [component, filearea] to be excluded
+     * if the file area is an empty string, all fileareas in
+     * this component will be excluded.
+     * @var string[][]
+     */
+    protected $excludedfileareas = [
+            ['user', 'draft'],
+            ['tool_recyclebin', ''],
+            ['assignfeedback_editpdf', ''], // Large files.
+        ];
+
+    /**
+     * The max size of files that should be packed in
+     * a single zip file.
+     * @var int
+     */
+    protected int $chunksize = -1;
+
     #[\Override]
     public static function get_instance($thing): self {
         switch ($thing) {
@@ -55,6 +75,74 @@ abstract class backup_base extends backup_restore_base {
             default:
                 throw new coding_exception("Not allowed thing $thing passed tot eh constructor.");
         }
+    }
+
+    /**
+     * Add files belonging to a certain component and file area to the exclusion list.
+     * @param  string $component the component in frankenstyle form.
+     * @param  string $filearea  the file area, if not passed all files belonging to this
+     *                           component will be excluded.
+     * @return void
+     */
+    public function exclude_filearea($component, $filearea = '') {
+        $component = clean_param($component, PARAM_COMPONENT);
+
+        if (empty($component)) {
+            debugging("Invalid component $component", DEBUG_DEVELOPER);
+
+            return;
+        }
+        $filearea                  = clean_param($filearea, PARAM_AREA);
+        $this->excludedfileareas[] = [$component, $filearea];
+    }
+
+    /**
+     * Don't exclude any files and backup them all.
+     * @return void
+     */
+    public function dont_exclude_fileareas() {
+        $this->excludedfileareas = [];
+    }
+
+    /**
+     * Set the file areas to be excluded, this could be array af arrays each of two elements, the first is the component
+     * and the other is the filearea (optional) or string of entries each in a separate line each line contain component,filearea.
+     * @param  array|string $newvalues
+     * @return void
+     */
+    public function set_excluded_fileareas(array|string $newvalues) {
+        if (is_string($newvalues)) {
+            $newvalues = explode("\n", $newvalues);
+            $newvalues = array_filter($newvalues);
+            $newvalues = array_map(function ($line) {
+                return array_map('trim', explode(',', $line));
+            }, $newvalues);
+        }
+        $this->excludedfileareas = [];
+
+        foreach ($newvalues as $array) {
+            $array = array_values($array);
+            $array = array_map('trim', $array);
+            $this->exclude_filearea($array[0], $array[1] ?? '');
+        }
+    }
+
+    /**
+     * Get the excluded fileareas.
+     * @param  bool $string either as string or as array
+     *              {@see \local_devassist\local\backup\backup_base::set_excluded_fileareas()}
+     * @return array<array>|string
+     */
+    public function get_excluded_fileareas($string = false): array|string {
+        if (!$string) {
+            return $this->excludedfileareas;
+        }
+
+        $output = array_map(function ($array) {
+            return implode(',', $array);
+        }, $this->excludedfileareas);
+
+        return implode("\n", $output);
     }
 
     /**
@@ -131,7 +219,11 @@ abstract class backup_base extends backup_restore_base {
         $packer    = get_file_packer('application/zip');
         $basetemp  = static::get_temp_dir(true);
         $ds        = DIRECTORY_SEPARATOR;
-        $chunksize = self::get_max_upload_size();
+        $chunksize = $this->get_chunk_size();
+
+        if ($chunksize === 0) {
+            $chunksize = PHP_INT_MAX;
+        }
 
         // Step 1: Estimate sizes and split into chunks.
         $currentbatch = [];
@@ -171,8 +263,7 @@ abstract class backup_base extends backup_restore_base {
         $this->archivedzips = [];
 
         foreach ($allbatches as $i => $batchfiles) {
-            $index   = str_pad($i, 3, '0', STR_PAD_LEFT);
-            $zipname = "{$thing}_{$index}.zip";
+            $zipname = self::format_chunk_name($i);
             $zippath = "{$basetemp}{$ds}{$zipname}";
 
             $this->trace("Creating archive: {$zipname}");
@@ -187,7 +278,9 @@ abstract class backup_base extends backup_restore_base {
             }
         }
 
-        if (count($this->archivedzips) > 1) {
+        $bundling = get_config('local_devassist', 'bundle_archive');
+
+        if ($bundling && count($this->archivedzips) > 1) {
             $superzip   = $basetemp . DIRECTORY_SEPARATOR . $thing . '_bundle.zip';
             $batchfiles = [];
 
@@ -209,6 +302,25 @@ abstract class backup_base extends backup_restore_base {
         }
 
         return !empty($this->archivedzips);
+    }
+
+    /**
+     * Format chunk file name.
+     * @param  string|int $i
+     * @return string
+     */
+    protected static function format_chunk_name($i) {
+        static $now = 0;
+
+        if (!$now) {
+            $clock = \core\di::get(\core\clock::class);
+            $now   = $clock->time();
+        }
+
+        $thing = static::get_supdir_name();
+        $index = str_pad($i, 4, '0', STR_PAD_LEFT);
+
+        return "{$thing}_{$now}_{$index}.zip";
     }
 
     /**
@@ -234,8 +346,7 @@ abstract class backup_base extends backup_restore_base {
 
         if (empty($files)) {
             echo 'No archive zip files found.';
-
-            return;
+            $files = [];
         }
 
         // Should be one file only.
@@ -253,6 +364,8 @@ abstract class backup_base extends backup_restore_base {
             echo '<br>';
         }
 
+        backup::print_backup_list_link();
+
         if ($autoclick && count($files) > 0) {
             $count  = count($files);
             $script = <<<JS
@@ -263,10 +376,11 @@ abstract class backup_base extends backup_restore_base {
                     function triggerNextDownload() {
                         if (i >= total) return;
                         const a = document.getElementById('download-' + i);
+                        i++;
                         if (a) {
                             a.click();
+                            return;
                         }
-                        i++;
                         setTimeout(triggerNextDownload, 1000); // Delay to avoid browser blocking
                     }
                     window.addEventListener('beforeunload', function(e) {
@@ -282,11 +396,24 @@ abstract class backup_base extends backup_restore_base {
     }
 
     /**
+     * Perform deleting of backup files.
+     * @return void
+     */
+    public static function delete() {
+        require_sesskey();
+
+        $filename = required_param('deletefile', PARAM_FILE);
+        $tempdir  = static::get_temp_dir(true);
+        $filepath = $tempdir . DIRECTORY_SEPARATOR . $filename;
+        @unlink($filepath);
+    }
+
+    /**
      * Begin download of a specific backup zip file.
      * @param  bool  $deleteafterdownload
      * @return never
      */
-    public static function download($deleteafterdownload = true) {
+    public static function download($deleteafterdownload = false) {
         require_sesskey();
 
         $filename = required_param('downloadfile', PARAM_FILE);
@@ -332,11 +459,41 @@ abstract class backup_base extends backup_restore_base {
     }
 
     /**
-     * Get the size in bytes from given string returned from ini.
-     * @param string $size
+     * Get the chunk size.
      * @return int
      */
-    protected static function parse_size($size) {
+    public function get_chunk_size(): int {
+        if ($this->chunksize >= 0) {
+            return $this->chunksize;
+        }
+        $this->chunksize = self::get_max_upload_size();
+
+        return $this->chunksize;
+    }
+
+    /**
+     * Set the chunk size to a new value.
+     * @param  string $chunksize
+     * @return void
+     */
+    public function set_chunk_size($chunksize) {
+        $chunksize = str_replace(' ', '', $chunksize);
+        $bytes     = self::parse_size($chunksize);
+
+        if ($bytes < 0) {
+            debugging("Un-allowed chunk size: $chunksize");
+
+            return;
+        }
+        $this->chunksize = $bytes;
+    }
+
+    /**
+     * Get the size in bytes from given string returned from ini.
+     * @param  string $size
+     * @return int
+     */
+    protected static function parse_size($size): int {
         $unit  = strtolower(substr($size, -1));
         $value = (int)$size;
 
@@ -350,12 +507,23 @@ abstract class backup_base extends backup_restore_base {
 
     /**
      * Get the max allowed upload file from the server config.
-     * @return int
+     * @param  mixed      $bytes
+     * @return int|string
      */
-    protected static function get_max_upload_size() {
-        return min(
-            static::parse_size(ini_get('upload_max_filesize')),
-            static::parse_size(ini_get('post_max_size'))
-        );
+    public static function get_max_upload_size($bytes = true) {
+        $upload      = ini_get('upload_max_filesize');
+        $uploadbytes = self::parse_size($upload);
+        $post        = ini_get('post_max_size');
+        $postbytes   = self::parse_size($post);
+
+        if ($bytes) {
+            return min($uploadbytes, $postbytes);
+        }
+
+        if ($uploadbytes < $postbytes) {
+            return $upload;
+        }
+
+        return $post;
     }
 }

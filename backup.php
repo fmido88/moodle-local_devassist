@@ -42,7 +42,21 @@ if ($download && confirm_sesskey()) {
 $form = new local_devassist\form\backup(null, null, 'post', '_blank');
 
 if ($data = $form->get_data()) {
-    $backup = local_devassist\local\backup\backup_base::get_instance($data->type);
+
+    $backup = \local_devassist\local\backup\backup_base::get_instance($data->type);
+
+    if (!empty($data->chunksize)) {
+        $backup->set_chunk_size($data->chunksize);
+    }
+
+    if ($data->type == 'database_tables' && !empty($data->ignoredtables)) {
+        $backup->set_ignored_tables($data->ignoredtables);
+    }
+
+    if ($data->type == 'files' && !empty($data->ignoredfileareas)) {
+        $backup->set_excluded($data->ignoredfileareas);
+    }
+
     $backup->process();
     exit;
 }

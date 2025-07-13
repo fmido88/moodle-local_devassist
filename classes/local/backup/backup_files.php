@@ -37,18 +37,6 @@ class backup_files extends backup_base {
     protected static $tempdir;
 
     /**
-     * list of pairs [component, filearea] to be excluded
-     * if the file area is an empty string, all fileareas in
-     * this component will be excluded.
-     * @var string[][]
-     */
-    protected $excluded = [
-            ['user', 'draft'],
-            ['tool_recyclebin', ''],
-            ['assignfeedback_editpdf', ''], // Large files.
-        ];
-
-    /**
      * Override to disallow delete original files parameter.
      * @param bool $printprogress
      */
@@ -65,33 +53,6 @@ class backup_files extends backup_base {
         return parent::__construct(false, $printprogress);
     }
 
-    /**
-     * Add files belonging to a certain component and file area to the exclusion list.
-     * @param  string $component the component in frankenstyle form.
-     * @param  string $filearea  the file area, if not passed all files belonging to this
-     *                           component will be excluded.
-     * @return void
-     */
-    public function exclude($component, $filearea = '') {
-        $component = clean_param($component, PARAM_COMPONENT);
-
-        if (empty($component)) {
-            debugging("Invalid component $component", DEBUG_DEVELOPER);
-
-            return;
-        }
-        $filearea         = clean_param($filearea, PARAM_AREA);
-        $this->excluded[] = [$component, $filearea];
-    }
-
-    /**
-     * Don't exclude any files and backup them all.
-     * @return void
-     */
-    public function dont_exclude() {
-        $this->excluded = [];
-    }
-
     #[\Override]
     public function backup() {
         global $DB;
@@ -100,7 +61,7 @@ class backup_files extends backup_base {
 
         $i = 0;
 
-        foreach ($this->excluded as $array) {
+        foreach ($this->excludedfileareas as $array) {
             $params["comp{$i}"] = $array[0];
             $sel                = "component != :comp{$i}";
 
