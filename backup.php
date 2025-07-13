@@ -49,12 +49,12 @@ if ($data = $form->get_data()) {
         $backup->set_chunk_size($data->chunksize);
     }
 
-    if ($data->type == 'database_tables' && !empty($data->ignoredtables)) {
+    if ($data->type == 'database_tables' && isset($data->ignoredtables)) {
         $backup->set_ignored_tables($data->ignoredtables);
     }
 
-    if ($data->type == 'files' && !empty($data->ignoredfileareas)) {
-        $backup->set_excluded($data->ignoredfileareas);
+    if (isset($data->ignoredfileareas)) {
+        $backup->set_excluded_fileareas($data->ignoredfileareas);
     }
 
     $backup->process();
