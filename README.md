@@ -4,13 +4,20 @@ Developer Assistance provides several tools helping developers
 
 - Language string sorter:
     * Automatically sort lang-strings for selected plugin
-- Plugins backup:
-    * Create a local backup of all additional plugins in your moodle installation and download it as a zip file
+- Backup:
+    * Plugins: Create a backup of all additional plugins in your moodle installation and download it as a zip file.
+    * Database: Create a backup of your Moodle database records and download it as a zip file.
+    * Files: Create a backup of all files stored in moodle system and download it as a single zip file.
+- Restore:
+    * Restore plugins, database records and files that has been backed up by the same plugin in another moodle installation.
 - Missing language strings and local translation:
     * Searching all php files for any missing lang strings and easily adding them to lang files.
     * Also this tool is excellent to create local translation files for other languages.
 - Editing and Adding capability
     * Easily add or edit capabilities in your plugin access.php file.
+- Advanced utilities for developer users
+    * Execute a php code from browser interface.
+    * Edit plugins files from browser interface.
 
 ## Installing via uploaded ZIP file ##
 
