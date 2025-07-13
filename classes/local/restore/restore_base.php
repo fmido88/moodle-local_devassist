@@ -139,6 +139,29 @@ abstract class restore_base extends backup_restore_base {
             }
             $i++;
         }
+
+        // Check if the extracted zip file contains another zip files.
+        // This could happen if the user uploaded the bundle zip.
+        $path = static::get_unzip_location();
+        $dir = dir($path);
+        while (false !== ($entry = $dir->read())) {
+            if (in_array($entry, ['.', '..'], true)) {
+                continue;
+            }
+            if ('zip' !== pathinfo($entry)['extension']) {
+                continue;
+            }
+            $filename = self::fix_directory_separator("$path/$entry");
+            $zip      = new zip_packer();
+            $progress = null;
+
+            if ($this->printprogress) {
+                $progress = new zip_progress(-1, $this->trace, 'extract');
+            }
+
+            $zip->extract_to_pathname($filename, static::get_unzip_location(), null, $progress);
+            @unlink($filename);
+        }
     }
 
     /**
