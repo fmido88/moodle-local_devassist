@@ -60,6 +60,7 @@ class zip_progress implements file_progress {
      * of a zip file.
      * @param int            $totalcount
      * @param progress_trace $trace
+     * @param string         $type extract or archive.
      */
     public function __construct(
         /** @var int The total count of files */

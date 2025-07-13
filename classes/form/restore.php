@@ -53,7 +53,7 @@ class restore extends \moodleform {
         for ($i = 0; $i < $number; $i++) {
             $elementname = 'zipfile' . $i;
 
-            $serial = '_' . str_pad($i, 3, '0', STR_PAD_LEFT);
+            $serial = '_' . str_pad($i, 4, '0', STR_PAD_LEFT);
             $mform->addElement(
                 'filepicker',
                 $elementname,
