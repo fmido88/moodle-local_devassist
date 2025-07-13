@@ -52,13 +52,15 @@ class scripts {
             'field_updateremote_profile_field_',
             'field_lock_profile_field_',
         ];
-        $fields = $DB->get_records('user_info_field', null, '', 'id, shortname');
+        $fields     = $DB->get_records('user_info_field', null, '', 'id, shortname');
         $shortnames = [];
+
         foreach ($fields as $field) {
             $shortnames[] = $field->shortname;
         }
 
         $allconfigs = [];
+
         foreach ($shortnames as $shortname) {
             foreach ($prefixes as $prefix) {
                 $allconfigs[] = $prefix . $shortname;
@@ -67,26 +69,28 @@ class scripts {
 
         $allconfiglower = array_map('strtolower', $allconfigs);
 
-        $params = [];
+        $params      = [];
         $namelikesql = '(';
-        $namelikes = [];
-        $i = 1;
+        $namelikes   = [];
+        $i           = 1;
+
         foreach ($prefixes as $prefix) {
-            $namelikes[] = $DB->sql_like('cfg.name', ':name' . $i, false, false);
+            $namelikes[]         = $DB->sql_like('cfg.name', ':name' . $i, false, false);
             $params['name' . $i] = $prefix . '%';
             $i++;
         }
         $namelikesql .= implode(' OR ', $namelikes) . ')';
-        $authlike = $DB->sql_like('cfg.plugin', ':auth', false, false);
+        $authlike       = $DB->sql_like('cfg.plugin', ':auth', false, false);
         $params['auth'] = 'auth_%';
-        $sql = "SELECT *
+        $sql            = "SELECT *
                 FROM {config_plugins} cfg
                 WHERE $namelikesql
                 AND $authlike";
         $configs = $DB->get_records_sql($sql, $params);
 
         $problematic = [];
-        $notexist = [];
+        $notexist    = [];
+
         foreach ($configs as $config) {
             if (!in_array(strtolower($config->name), $allconfiglower, true)) {
                 $notexist[] = $config;
@@ -94,8 +98,8 @@ class scripts {
                 foreach ($allconfigs as $name) {
                     if (strtolower($name) === strtolower($config->name)) {
                         $config->oldname = $config->name;
-                        $config->name = $name;
-                        $problematic[] = $config;
+                        $config->name    = $name;
+                        $problematic[]   = $config;
                         break;
                     }
                 }
@@ -109,6 +113,70 @@ class scripts {
 
         foreach ($problematic as $update) {
             $DB->update_record('config_plugins', $update);
+        }
+    }
+
+    /**
+     * Get plugins with invalid version.php files.
+     * @return array{path: mixed, reason: string[]}
+     */
+    public static function get_invalid_plugins() {
+        $invalidplugins = [];
+
+        $plugintypes = \core_component::get_plugin_types();
+
+        foreach ($plugintypes as $type => $typedir) {
+            $plugs = \core_component::get_plugin_list($type);
+
+            foreach ($plugs as $plug => $fullplug) {
+                $module          = new \stdClass();
+                $plugin          = new \stdClass();
+                $plugin->version = null;
+
+                $versionfile = $fullplug . DIRECTORY_SEPARATOR . 'version.php';
+                $component   = "{$type}_{$plug}";
+
+                if (!file_exists($versionfile)) {
+                    $invalidplugins[] = [
+                        'reason' => 'File version.php not exists.',
+                        'path'   => $fullplug,
+                    ];
+                    continue;
+                }
+
+                include($versionfile);
+
+                // Check if the legacy $module syntax is still used.
+                if (!is_object($module) || (count((array)$module) > 0)) {
+                    $invalidplugins[] = [
+                        'reason' => "Unsupported \$module syntax detected in version.php of the $component plugin.",
+                        'path'   => $fullplug,
+                    ];
+                    continue;
+                }
+
+                // Check if the component is properly declared.
+                if (empty($plugin->component) || ($plugin->component !== $component)) {
+                    $invalidplugins[] = [
+                        'reason' => "Plugin $component does not declare valid \$plugin->component in its version.php.",
+                        'path'   => $fullplug,
+                    ];
+                }
+            }
+        }
+
+        return $invalidplugins;
+    }
+
+    /**
+     * Delete plugins with invalid version.php files.
+     * @return void
+     */
+    public static function delete_invalid_plugins() {
+        $list = self::get_invalid_plugins();
+
+        foreach ($list as $item) {
+            @remove_dir($item['path']);
         }
     }
 }
