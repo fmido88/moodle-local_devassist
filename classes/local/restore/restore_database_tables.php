@@ -18,6 +18,7 @@ namespace local_devassist\local\restore;
 
 use csv_import_reader;
 use local_devassist\local\backup\backup_database_tables;
+use xmldb_table;
 
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/csvlib.class.php');
@@ -37,8 +38,14 @@ class restore_database_tables extends restore_base {
     protected function restore() {
         global $DB;
         $path = self::get_unzip_location();
+        $this->trace("restore from $path");
         $tr = $DB->start_delegated_transaction();
         try {
+            // Delete newly installed tables that wasn't existed in the old
+            // installation, this should not show any effect if the same version of
+            // moodle or its component existed, if there is a difference the upgrade process
+            // will run after restore process and these table will be installed again.
+            $this->delete_new_tables();
             $this->restore_from_path($path);
         } catch (\Throwable $e) {
             $tr->rollback($e);
@@ -46,6 +53,78 @@ class restore_database_tables extends restore_base {
         $tr->allow_commit();
         $this->trace("Completed.");
         $this->trace->finished();
+    }
+
+    /**
+     * For upgrading processes, after testing when the database records restored
+     * all versions return to its old values again and moodle need upgrading
+     * if the new tables existed it cause exception in the upgrade process as some not
+     * conditionally added.
+     *
+     * These tables will be renamed as {$tablename}_del to be deleted or restored later.
+     * @return void
+     */
+    protected function delete_new_tables() {
+        global $DB;
+        $oldtables = $this->get_the_old_tables_list();
+        if (!$oldtables) {
+            debugging("The file tables.json was not provided in the tables list...", DEBUG_DEVELOPER);
+            return;
+        }
+        $oldtables = array_values((array)$oldtables);
+        $newtables = $DB->get_tables(false);
+        foreach ($newtables as $table) {
+            if (!in_array($table, $oldtables)) {
+                $this->trace("The table $table should be deleted as it should be installed again in upgrade process...", 1);
+                $this->trace("The table $table will be renamed to {$table}_del and you should delete it manually later...", 1);
+                if (!isset($dbman)) {
+                    $dbman = $DB->get_manager();
+                }
+                $xmldbtable = new xmldb_table($table);
+                $dbman->rename_table($xmldbtable, $table . '_del');
+            }
+        }
+    }
+
+    /**
+     * Get the old table list from tables.json file.
+     * @param ?string $path
+     */
+    protected function get_the_old_tables_list($path = null) {
+        if ($path === null) {
+            $path = self::get_unzip_location();
+        }
+
+        if (is_file($path)) {
+            $pathinfo = pathinfo($path);
+            if ($pathinfo['basename'] === 'tables.json') {
+                $tables = json_decode(file_get_contents($path), true);
+                unlink($path);
+                return $tables;
+            } else {
+                return null;
+            }
+        }
+
+        $dir = dir($path);
+        while (false !== ($entry = $dir->read())) {
+            if ($entry == '.' || $entry == '..') {
+                continue;
+            }
+
+            $newpath = self::fix_directory_separator("$path/$entry");
+            if (is_dir($newpath)) {
+                if ($tables = $this->get_the_old_tables_list($newpath)) {
+                    $dir->close();
+                    return $tables;
+                }
+            } else if ($entry === 'tables.json') {
+                $dir->close();
+                return $this->get_the_old_tables_list($entry);
+            }
+        }
+        $dir->close();
+        return null;
     }
 
     /**
@@ -60,13 +139,14 @@ class restore_database_tables extends restore_base {
         }
 
         $dir = dir($path);
-        while ($entry = $dir->read()) {
+        while (false !== ($entry = $dir->read())) {
             if ($entry == '.' || $entry == '..') {
                 continue;
             }
             $newpath = self::fix_directory_separator("$path/$entry");
             $this->restore_from_path($newpath);
         }
+        $dir->close();
     }
 
     /**

@@ -62,6 +62,10 @@ class backup_database_tables extends backup_base {
     public function backup() {
         global $DB;
         $tables = $DB->get_tables(false);
+        // Saving the tables list help in restore operation to check which table
+        // was not existed in the old installation and delete it to prevent misbehave
+        // in upgrade process.
+        $this->save_tables_list($tables);
 
         $this->trace('Total ' . count($tables) . ' table found...');
         $backup = 0;
@@ -88,6 +92,16 @@ class backup_database_tables extends backup_base {
         $this->trace("Total $backup table(s) to be backed up...");
     }
 
+    /**
+     * Save the current list of tables to the temp directory.
+     * @param array $tables
+     * @return void
+     */
+    protected function save_tables_list($tables) {
+        $tables = array_values((array)$tables);
+        $json = json_encode($tables);
+        $this->save_temp_file('tables.json', $json);
+    }
     /**
      * Save a table records in a csv file.
      * @param string $tablename
