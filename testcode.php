@@ -38,11 +38,13 @@ local_devassist_display_developer_confirmation();
 $code = optional_param('code', null, PARAM_RAW);
 
 $output = '';
+
 if ($code) {
     $tr = $DB->start_delegated_transaction();
+
     try {
         ob_start();
-        $eval = function($cod) {
+        $eval = function ($cod) {
             $code = fullclone($cod);
             // Using eval() is very dangerous but the admin confirmed they are a developer
             // and know what they doing.
@@ -70,6 +72,7 @@ local_devassist_add_warning_message(true);
 $mform = new MoodleQuickForm('evaluate', 'post', $url, '', ['class' => 'full-width-labels']);
 
 $mform->addElement('textarea', 'code', 'Code');
+
 if ($code) {
     $mform->setDefault('code', $code);
 }
