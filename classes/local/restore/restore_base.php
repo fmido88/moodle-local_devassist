@@ -129,7 +129,7 @@ abstract class restore_base extends backup_restore_base {
             $progress = null;
 
             if ($this->printprogress) {
-                $progress = new zip_progress(-1, $this->trace);
+                $progress = new zip_progress(-1, $this->trace, 'extract');
             }
 
             $zip->extract_to_pathname($filename, static::get_unzip_location(), null, $progress);
@@ -166,6 +166,7 @@ abstract class restore_base extends backup_restore_base {
 
     /**
      * Set the restore form.
+     * must be called before process.
      * @param  upload_form $zipform
      * @return void
      */

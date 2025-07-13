@@ -65,7 +65,9 @@ class zip_progress implements file_progress {
         /** @var int The total count of files */
         protected int $totalcount,
         /** @var progress_trace the progress trace used to print output. */
-        public progress_trace $trace
+        public progress_trace $trace,
+        /** @var string extract or archive. */
+        protected string $type = 'archive'
     ) {
     }
 
@@ -76,7 +78,13 @@ class zip_progress implements file_progress {
         }
 
         if ($this->done == 0 && !$this->init) {
-            $this->trace->output('Start packing the archive file');
+
+            if ($this->type == 'extract') {
+                $this->trace->output("Start extracting...");
+            } else {
+                $this->trace->output('Start packing the archive file');
+            }
+
             $this->init = true;
         }
 
