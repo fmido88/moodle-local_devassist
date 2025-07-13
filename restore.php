@@ -32,7 +32,12 @@ admin_externalpage_setup('local_devassist_restore');
 require_admin();
 
 $form = new local_devassist\form\restore();
-if ($data = $form->get_data()) {
+
+if ($form->is_cancelled()) {
+    $url = new moodle_url($PAGE->url);
+    $url->remove_all_params();
+    redirect($url);
+} else if (($data = $form->get_data()) && $data->uploaded) {
     $restorer = restore_base::get_instance($data->type);
     $restorer->set_upload_form($form);
     $restorer->process();

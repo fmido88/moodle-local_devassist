@@ -20,7 +20,8 @@ use local_devassist\local\restore\restore_base;
 
 defined('MOODLE_INTERNAL') || die();
 global $CFG;
-require_once($CFG->libdir."/formslib.php");
+require_once($CFG->libdir . '/formslib.php');
+
 /**
  * Restoring form by uploading a zip file.
  *
@@ -30,7 +31,7 @@ require_once($CFG->libdir."/formslib.php");
  */
 class restore extends \moodleform {
     /**
-     * Form definition
+     * Form definition.
      * @return void
      */
     protected function definition() {
@@ -38,29 +39,74 @@ class restore extends \moodleform {
         $mform->addElement('header', 'general', get_string('restore', 'local_devassist'));
         $mform->addHelpButton('general', 'restore', 'local_devassist');
 
-        $mform->addElement('filepicker', 'zipfile', get_string('uploadzipfile', 'local_devassist'),
-            null, ['accepted_types' => '.zip', 'maxbytes' => 0]);
-        $mform->addHelpButton('zipfile', 'uploadzipfile', 'local_devassist');
-        $mform->addRule('zipfile', null, 'required', null, 'client');
+        $number = $this->optional_param('number', 0, PARAM_INT);
 
-        $options = restore_base::get_options();
-        $mform->addElement('select', 'type', get_string('restore_type', 'local_devassist'), $options);
-        $mform->addHelpButton('type', 'restore_type', 'local_devassist');
+        if (!$number) {
+            $mform->addElement('text', 'number', get_string('numberofchunks', 'local_devassist'));
+            $mform->setDefault('number', 1);
+            $mform->addRule('number', null, 'required');
+        } else {
+            $mform->addElement('hidden', 'number', $number);
+        }
+        $mform->setType('number', PARAM_INT);
 
-        $mform->addElement('static', 'restore_plugins',
-                $options['plugins'], get_string('restore_plugins_help', 'local_devassist'));
-        $mform->hideIf('restore_plugins', 'type', 'neq', 'plugins');
+        for ($i = 0; $i < $number; $i++) {
+            $elementname = 'zipfile' . $i;
 
-        $mform->addElement('static', 'restore_database_tables',
-                $options['database_tables'], get_string('restore_database_tables_help', 'local_devassist'));
-        $mform->hideIf('restore_database_tables', 'type', 'neq', 'database_tables');
+            $serial = '_' . str_pad($i, 3, '0', STR_PAD_LEFT);
+            $mform->addElement(
+                'filepicker',
+                $elementname,
+                get_string('uploadzipfile', 'local_devassist', $serial),
+                null,
+                ['accepted_types' => '.zip', 'maxbytes' => 0]
+            );
+            $mform->addHelpButton($elementname, 'uploadzipfile', 'local_devassist');
+            $mform->addRule($elementname, null, 'required', null, 'client');
+        }
 
-        $mform->addElement('static', 'restore_files',
-                $options['files'], get_string('restore_files_help', 'local_devassist'));
-        $mform->hideIf('files', 'type', 'neq', 'files');
+        if ($number) {
+            $options = restore_base::get_options();
+            $mform->addElement('select', 'type', get_string('restore_type', 'local_devassist'), $options);
+            $mform->addHelpButton('type', 'restore_type', 'local_devassist');
+
+            $mform->addElement(
+                'static',
+                'restore_plugins',
+                $options['plugins'],
+                get_string('restore_plugins_help', 'local_devassist')
+            );
+            $mform->hideIf('restore_plugins', 'type', 'neq', 'plugins');
+
+            $mform->addElement(
+                'static',
+                'restore_database_tables',
+                $options['database_tables'],
+                get_string('restore_database_tables_help', 'local_devassist')
+            );
+            $mform->hideIf('restore_database_tables', 'type', 'neq', 'database_tables');
+
+            $mform->addElement(
+                'static',
+                'restore_files',
+                $options['files'],
+                get_string('restore_files_help', 'local_devassist')
+            );
+            $mform->hideIf('restore_files', 'type', 'neq', 'files');
+
+            $mform->addElement('hidden', 'uploaded');
+            $mform->setConstant('uploaded', true);
+        } else {
+            $mform->addElement('hidden', 'uploaded', false);
+        }
+        $mform->setType('uploaded', PARAM_BOOL);
 
         backup::add_maintenance_note($mform);
 
-        $this->add_action_buttons(false, get_string('restorefromzipfile', 'local_devassist'));
+        if ($number) {
+            $this->add_action_buttons(true, get_string('restorefromzipfile', 'local_devassist'));
+        } else {
+            $this->add_action_buttons(false, get_string('next'));
+        }
     }
 }

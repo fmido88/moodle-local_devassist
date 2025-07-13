@@ -38,9 +38,9 @@ abstract class restore_base extends backup_restore_base {
 
     /**
      * The path of the zip file in the temp directory.
-     * @var string
+     * @var string[]
      */
-    protected string $zipfilename;
+    protected array $zipfiles = [];
 
     /**
      * Return the location at which the zip file should be extracted.
@@ -54,16 +54,20 @@ abstract class restore_base extends backup_restore_base {
      */
     public function process() {
         $this->init();
+
         try {
             $this->extract();
             $this->restore();
         } catch (\Throwable $e) {
-            $this->finished();
+            parent::finished();
+
             throw $e;
         }
 
         if ($this->deleteoriginal) {
-            @unlink($this->zipfilename);
+            foreach ($this->zipfiles as $file) {
+                @unlink($file);
+            }
         }
 
         $this->finished();
@@ -78,25 +82,63 @@ abstract class restore_base extends backup_restore_base {
     abstract protected function restore();
 
     /**
+     * Wrapper around moodleform::filegetcontent to avoid thrown errors.
+     * @param  int              $i
+     * @return bool|string|null
+     */
+    private function get_file_content($i) {
+        $content = null;
+
+        try {
+            $content = @$this->zipform->get_file_content('zipfile' . $i);
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        return $content;
+    }
+
+    /**
      * Extract the zip file content to the specific location.
      * @return void
      */
     protected function extract() {
-        $content   = $this->zipform->get_file_content('zipfile');
-        $tempdir   = static::get_temp_dir(true);
-        $thingname = $this->get_supdir_name();
-        $filename  = "{$tempdir}/{$thingname}.zip";
-        $filename  = self::fix_directory_separator($filename);
-        file_put_contents($filename, $content);
+        global $USER;
+        $i             = 0;
+        $submitteddata = $this->zipform->get_data();
 
-        $this->zipfilename = $filename;
-        $zip               = new zip_packer();
-        $progress          = null;
+        $fs      = get_file_storage();
+        $context = \context_user::instance($USER->id);
 
-        if ($this->printprogress) {
-            $progress = new zip_progress(-1, $this->trace);
+        while ($content = $this->get_file_content($i)) {
+            $tempdir   = static::get_temp_dir(true);
+            $thingname = $this->get_supdir_name();
+            $filename  = "{$tempdir}/{$thingname}{$i}.zip";
+            $filename  = self::fix_directory_separator($filename);
+            file_put_contents($filename, $content);
+
+            // Cleanup.
+            unset($content);
+            $draftid = @$submitteddata->{"zipfile$i"};
+
+            if ($draftid) {
+                $fs->delete_area_files($context->id, 'user', 'draft', $draftid);
+            }
+
+            $zip      = new zip_packer();
+            $progress = null;
+
+            if ($this->printprogress) {
+                $progress = new zip_progress(-1, $this->trace);
+            }
+
+            $zip->extract_to_pathname($filename, static::get_unzip_location(), null, $progress);
+
+            if ($this->deleteoriginal) {
+                @unlink($filename);
+            }
+            $i++;
         }
-        $zip->extract_to_pathname($filename, static::get_unzip_location(), null, $progress);
     }
 
     /**
