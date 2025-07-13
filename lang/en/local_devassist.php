@@ -65,6 +65,7 @@ $string['developerconfirmationtext'] = 'Make sure you know what are you doing be
 This page could change the plugin file content, so make sure that you have a backup of these files before doing anything. ';
 $string['developerwarning'] = 'This page could change the plugin file content or database, so make sure that you have a backup of these files before doing anything.';
 $string['devtools'] = 'Developer Assistant Tools';
+$string['downloadfile'] = 'Download {$a}';
 
 
 $string['editpluginserverfiles'] = 'Edit plugin php files';
@@ -89,6 +90,7 @@ $string['missing_strings'] = 'Missing strings for component ({$a})';
 
 
 $string['no_missing_strings'] = 'No missing strings for component ({$a})';
+$string['numberofchunks'] = 'Number of parts';
 
 
 $string['plugin_backup_confirm'] = 'Your are about to create backup of all additional plugins and download it as a zip file, this will take some time and downloaded automatically after it.';
@@ -120,7 +122,7 @@ $string['string_files_success'] = 'Language files successfully sorted:';
 $string['strings_added_success'] = '{$a} strings added successfully.';
 
 
-$string['uploadzipfile'] = 'Upload zip file';
+$string['uploadzipfile'] = 'Upload zip file {$a}';
 $string['uploadzipfile_help'] = 'The uploaded zip file should be created by the same plugin during the backup process.';
 
 
