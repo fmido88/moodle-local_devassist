@@ -60,7 +60,12 @@ abstract class backup_base extends backup_restore_base {
      */
     protected int $chunksize = -1;
 
-    #[\Override]
+    /**
+     * Get the backup class according to the thing we want to backup
+     * @param string $thing
+     * @throws coding_exception
+     * @return backup_database_tables|backup_files|backup_plugins
+     */
     public static function get_instance($thing): self {
         switch ($thing) {
             case 'plugins':
@@ -73,8 +78,8 @@ abstract class backup_base extends backup_restore_base {
                 return new backup_database_tables(true, true);
 
             default:
-                throw new coding_exception("Not allowed thing $thing passed tot eh constructor.");
         }
+        throw new coding_exception("Not allowed thing $thing passed tot eh constructor.");
     }
 
     /**

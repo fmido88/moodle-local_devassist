@@ -153,7 +153,7 @@ abstract class backup_restore_base {
      * Get instance of restoring or backing up class by the name of the
      * thing needed for restoring of backing up.
      * @param  string $thing
-     * @return void
+     * @return backup_restore_base
      */
     abstract public static function get_instance($thing): self;
 

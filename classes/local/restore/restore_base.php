@@ -205,7 +205,7 @@ abstract class restore_base extends backup_restore_base {
      *
      * @param  string           $thing
      * @throws coding_exception
-     * @return restore_base
+     * @return restore_files|restore_database_tables|restore_files
      */
     public static function get_instance($thing): self {
         switch ($thing) {
