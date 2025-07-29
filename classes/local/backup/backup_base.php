@@ -442,6 +442,10 @@ abstract class backup_base extends backup_restore_base {
         exit;
     }
 
+    /**
+     * Try to enable XSendFile for the current request.
+     * @return void
+     */
     private static function try_enable_xsend() {
         global $CFG;
         if (!empty($CFG->xsendfile)) {
@@ -452,17 +456,18 @@ abstract class backup_base extends backup_restore_base {
 
         if (stripos($server, 'Apache') !== false) {
             if (function_exists('apache_get_modules') && in_array('mod_xsendfile', apache_get_modules())) {
-                $CFG->xsendfile = 'X-Sendfile'; // Apache
+                $CFG->xsendfile = 'X-Sendfile'; // Apache.
             }
         } else if (stripos($server, 'nginx') !== false) {
-            $CFG->xsendfile = 'X-Accel-Redirect'; // Nginx
+            $CFG->xsendfile = 'X-Accel-Redirect'; // Nginx.
             $CFG->xsendfilealiases = [
                 '/tempdir/' => $CFG->dataroot,
             ];
         } else if (stripos($server, 'lighttpd') !== false) {
-            $CFG->xsendfile = 'X-LIGHTTPD-send-file'; // Lighttpd
+            $CFG->xsendfile = 'X-LIGHTTPD-send-file'; // Lighttpd.
         }
     }
+
     #[\Override]
     public static function get_options(): array {
         $options = [];
