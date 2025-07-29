@@ -179,4 +179,98 @@ class scripts {
             @remove_dir($item['path']);
         }
     }
+
+    /**
+     * Get the list of files in a directory recursively.
+     * @param string $path
+     * @param ?array $files
+     * @return void
+     */
+    public static function get_files_in_directory(string  $path, ?array &$files) {
+        if ($files === null) {
+            $files = [];
+        }
+
+        if (is_file($path)) {
+            $files[$path] = basename($path);
+            return;
+        }
+
+        $dir = dir($path);
+        while (false !== ($entry = $dir->read())) {
+            if (in_array($entry, ['.', '..'])) {
+                continue;
+            }
+            $newpath = $path . DIRECTORY_SEPARATOR . $entry;
+            self::get_files_in_directory($newpath, $files);
+        }
+    }
+
+    /**
+     * After migration, may be some files in the database will not exist in the filedir and
+     * the other way around, this method list them all.
+     *
+     * @return array{db_miss: array, dir_miss: array}
+     */
+    public static function get_unlisted_files() {
+        global $CFG, $DB;
+        $filedir = $CFG->filedir ?? $CFG->dataroot . DIRECTORY_SEPARATOR . 'filedir';
+
+        self::get_files_in_directory($filedir, $files);
+
+        $records = $DB->get_records('files', null, '', 'id, contenthash');
+        $notlisted = [
+            'db_miss' => [],
+            'dir_miss' => [],
+        ];
+
+        $fileskeysfound = [];
+        foreach ($records as $k => $record) {
+            if (!in_array($record->contenthash, $files)) {
+                $notlisted['dir_miss'][] = (array)$record;
+            } else {
+                if (isset($fileskeysfound[$record->contenthash])) {
+                    continue;
+                }
+
+                $key = array_find_key($files, function($contenthash) use($record) {
+                    return $contenthash == $record->contenthash;
+                });
+                $fileskeysfound[$record->contenthash] = $key;
+            }
+        }
+
+        foreach ($files as $pathname => $contenthash) {
+            if (isset($fileskeysfound[$contenthash])) {
+                continue;
+            }
+
+            if ($contenthash == 'warning.txt') {
+                continue;
+            }
+
+            $notlisted['db_miss'][] = [
+                'path'        => $pathname,
+                'contenthash' => $contenthash,
+            ];
+        }
+
+        return $notlisted;
+    }
+}
+
+if (!function_exists('array_find_key')) {
+    /**
+     * This function is already existed in php 8.4+
+     * @param array $array
+     * @param callable $callback
+     */
+    function array_find_key(array $array, callable $callback) {
+        foreach ($array as $key => $value) {
+            if ($callback($value, $key)) {
+                return $key;
+            }
+        }
+        return null;
+    }
 }
