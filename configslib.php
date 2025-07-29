@@ -79,8 +79,9 @@ function local_devassist_get_multidomain_configfile() {
         if (\$target && isset(\$configs[\$target])) {
             require_once(\$configs[\$target]);
         } else {
-            require_once("config-backup.php"); // fallback
+            require_once("config-backup.php"); // fallback.
         }
+
         PHP;
 }
 
