@@ -26,6 +26,7 @@ require_once('../../config.php');
 require_once(__DIR__.'/locallib.php');
 
 require_admin();
+local_devassist\common::check_developer_tools_enabled();
 
 $url = new moodle_url('/local/devassist/missing_strings.php', []);
 $PAGE->set_url($url);
@@ -52,6 +53,7 @@ if ($mform->is_cancelled()) {
 }
 
 if ($result = $mform->add_string_file()) {
+    get_string_manager(true)->reset_caches();
     if ($result === -1) {
         $msg = get_string('cannot_write_file', 'local_devassist');
         $type = 'error';

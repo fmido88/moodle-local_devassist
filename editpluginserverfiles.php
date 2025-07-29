@@ -24,9 +24,13 @@
 use local_devassist\common;
 
 require_once('../../config.php');
+
+require_admin();
+common::check_developer_tools_enabled();
+
 require_once('locallib.php');
 require_once("$CFG->libdir/formslib.php");
-require_admin();
+
 
 $url = new moodle_url('/local/devassist/editpluginserverfiles.php', []);
 $PAGE->set_url($url);

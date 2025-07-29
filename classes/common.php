@@ -122,6 +122,23 @@ class common {
     }
 
     /**
+     * Check if the developer tools options enabled or not before
+     * using certain pages.
+     * @param bool $redirect
+     * @return bool
+     */
+    public static function check_developer_tools_enabled($redirect = true) {
+        $enabled = (bool)get_config('local_devassist', 'devtoolsenabled');
+
+        if (!$enabled && $redirect) {
+            $url = new \moodle_url('/admin/settings.php', ['section' => 'local_devassist_settings']);
+            $msg = get_string('enabledevtools_error', 'local_devassist');
+            redirect($url, $msg, null, \core\notification::ERROR);
+        }
+
+        return $enabled;
+    }
+    /**
      * Add plugin selection elements to a form.
      *
      * @param \MoodleQuickForm $mform

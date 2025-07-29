@@ -27,6 +27,8 @@ require_once('locallib.php');
 
 require_admin();
 
+local_devassist\common::check_developer_tools_enabled();
+
 $url = new moodle_url('/local/devassist/testcode.php', []);
 $PAGE->set_url($url);
 $PAGE->set_context(context_system::instance());
