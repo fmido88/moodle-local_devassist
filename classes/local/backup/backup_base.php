@@ -419,39 +419,50 @@ abstract class backup_base extends backup_restore_base {
      * @return never
      */
     public static function download($deleteafterdownload = false) {
+        global $CFG;
+        require_once($CFG->libdir . '/filelib.php');
         require_sesskey();
 
         $filename = required_param('downloadfile', PARAM_FILE);
         $tempdir  = static::get_temp_dir(true);
         $filepath = $tempdir . DIRECTORY_SEPARATOR . $filename;
 
-        if (!file_exists($filepath)) {
-            echo "The file $filename does not exist.";
-            exit;
-        }
-
+        self::try_enable_xsend();
         // Clean all output buffers because $PAGE may have started buffers.
         while (ob_get_level()) {
             ob_end_clean();
         }
 
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/zip');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Expires: 0');
-        header('Cache-Control: must-revalidate');
-        header('Pragma: public');
-        header('Content-Length: ' . filesize($filepath));
-
-        readfile($filepath);
-
         if ($deleteafterdownload) {
-            unlink($filepath);
+            send_temp_file($filepath, $filename);
+        } else {
+            send_file($filepath, $filename, null, 0, false, true);
         }
 
         exit;
     }
 
+    private static function try_enable_xsend() {
+        global $CFG;
+        if (!empty($CFG->xsendfile)) {
+            return;
+        }
+
+        $server = $_SERVER['SERVER_SOFTWARE'] ?? '';
+
+        if (stripos($server, 'Apache') !== false) {
+            if (function_exists('apache_get_modules') && in_array('mod_xsendfile', apache_get_modules())) {
+                $CFG->xsendfile = 'X-Sendfile'; // Apache
+            }
+        } else if (stripos($server, 'nginx') !== false) {
+            $CFG->xsendfile = 'X-Accel-Redirect'; // Nginx
+            $CFG->xsendfilealiases = [
+                '/tempdir/' => $CFG->dataroot,
+            ];
+        } else if (stripos($server, 'lighttpd') !== false) {
+            $CFG->xsendfile = 'X-LIGHTTPD-send-file'; // Lighttpd
+        }
+    }
     #[\Override]
     public static function get_options(): array {
         $options = [];
