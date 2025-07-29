@@ -59,6 +59,12 @@ class missing_strings extends \moodleform {
             $fullcomponent = $type . "_" . $component;
         }
 
+        if (!empty($fullcomponent)
+            && (\core_component::get_component_directory($fullcomponent) === null)) {
+            debugging("Component $fullcomponent not exist...");
+            $fullcomponent = null;
+        }
+
         if (empty($fullcomponent) || $this->is_cancelled()) {
             $this->select_plugin_definition();
             return;
@@ -118,22 +124,28 @@ class missing_strings extends \moodleform {
         foreach ($strings as $string) {
             list($identifier, $component) = explode('///', $string, 2);
             $noteng = $this->lang !== 'en';
-            if ($component == $this->fullcomponent) {
+            if ($component === $this->fullcomponent) {
                 $mform->addElement('textarea', 'newstring__' . $identifier, $identifier, ['size' => 100]);
-                $mform->setType('newstring__' . $identifier, PARAM_TEXT);
+                $mform->setType('newstring__' . $identifier, PARAM_CLEANHTML);
                 if ($noteng) {
                     $mform->addElement('static', $identifier . "__en",
                                         $identifier . "__en",
                                         new \lang_string($identifier, $component, null, 'en'));
                 }
             } else {
-                $mform->addElement('static', $identifier.'__'.$component, $component, $identifier);
+                $a = [
+                    'component'  => $component,
+                    'identifier' => $identifier,
+                    'currentcomponent' => $this->fullcomponent,
+                ];
+                $warn = get_string('othercomponentmissingstring', 'local_devassist', $a);
+                $mform->addElement('static', $identifier.'__'.$component, $identifier, $warn);
             }
         }
 
         $mform->addElement('hidden', 'fullcomponent');
         $mform->setType('fullcomponent', PARAM_TEXT);
-        $mform->setDefault('fullcomponent', $component);
+        $mform->setDefault('fullcomponent', $this->fullcomponent);
 
         $mform->addElement('hidden', 'lang');
         $mform->setType('lang', PARAM_TEXT);
@@ -189,12 +201,13 @@ class missing_strings extends \moodleform {
             }
             $i++;
             $identifier = str_replace('newstring__', '', $key);
-            $content .= '$string[\''.$identifier.'\'] = \''.str_replace('\'', '\\\'', $value).'\';' . "\n";
+            $value = str_replace('\'', '\\\'', $value);
+            $value = str_replace(htmlspecialchars('{a->'), '{a->', $value);
+            $content .= '$string[\''.$identifier.'\'] = \''.$value.'\';' . "\n";
         }
 
         $done = @file_put_contents("$info->rootdir/lang/$lang/$fullcomponent.php", $content);
         if ($done) {
-            purge_caches(['lang' => true]);
             return $i;
         }
 

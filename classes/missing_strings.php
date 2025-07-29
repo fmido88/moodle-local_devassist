@@ -86,10 +86,15 @@ class missing_strings {
     public function __construct($component, $lang = 'en') {
 
         $this->component = clean_param($component, PARAM_COMPONENT);
-        list($this->type, $this->plugin) = explode('_', $component, 2);
+        list($this->type, $this->plugin) = explode('_', $this->component, 2);
 
         $pluginman = core_plugin_manager::instance();
-        $this->info = $pluginman->get_plugin_info($component);
+        $this->info = $pluginman->get_plugin_info($this->component);
+        if ($this->info === null) {
+            debugging("The component $component is not existed...");
+            return;
+        }
+
         $this->rootpath = $this->info->rootdir;
 
         $this->special = [
@@ -99,11 +104,11 @@ class missing_strings {
             'privacy'  => $this->rootpath . "/classes/privacy/provider.php",
         ];
 
-        $langfile = $this->rootpath . "/lang/$lang/$component.php";
+        $langfile = $this->rootpath . "/lang/$lang/{$this->component}.php";
 
         $string = [];
         if (file_exists($langfile)) {
-            include_once($langfile);
+            include($langfile);
         }
 
         $this->exist = $string;
@@ -166,11 +171,26 @@ class missing_strings {
     /**
      * Check if the string not exist and add it to missing strings array.
      * @param string $key the key of the string
+     * @param ?string $component
      * @return void
      */
-    protected function check_string_exist($key) {
-        if (!array_key_exists($key, $this->exist)) {
-            $this->strings[] = $key . '///' . $this->component;
+    protected function check_string_exist($key, $component = null) {
+        if ($component === null) {
+            $component = $this->component;
+        }
+
+        $exist = false;
+        if ($component === $this->component) {
+            $exist = array_key_exists($key, $this->exist);
+        } else {
+            if (!isset($this->strman)) {
+                $this->strman = get_string_manager(true);
+            }
+            $exist = $this->strman->string_exists($key, $component);
+        }
+
+        if (!$exist) {
+            $this->strings[] = $key . '///' . $component;
         }
     }
 
@@ -180,40 +200,34 @@ class missing_strings {
      * @return void
      */
     protected function scan_files($source) {
-        global $CFG;
-        if (empty($strings)) {
-            $strings = [];
-        }
-        // Simple copy for a file.
+
+        // Simple scan for a file.
         if (is_file($source)) {
+            $ext = pathinfo($source)['extension'] ?? '';
             // Make sure this is an php file.
-            if (strpos($source, '.php') === (strlen($source) - 4)) {
-                switch ($source) {
-                    case $this->special['access']:
-                        return $this->look_for_access_strings($source);
-                    case $this->special['caches']:
-                        return $this->look_for_cache_def($source);
-                    case $this->special['messages']:
-                        return $this->look_for_msg_providers($source);
-                    case $this->special['privacy']:
-                        return $this->look_for_privacy_providers($source);
-                    default:
-                        return $this->look_for_get_string($source);
-                }
-            } else if (strpos($source, '.mustache') == (strlen($source) - 9)) {
-
-                return $this->scan_mustache($source);
-
-            } else {
-                return;
+            switch ($ext) {
+                case 'php':
+                    return match($source) {
+                        $this->special['access']   => $this->look_for_access_strings($source),
+                        $this->special['caches']   => $this->look_for_cache_def($source),
+                        $this->special['messages'] => $this->look_for_msg_providers($source),
+                        $this->special['privacy']  => $this->look_for_privacy_providers($source),
+                        default => $this->look_for_get_string($source),
+                    };
+                case 'mustache':
+                    return $this->scan_mustache($source);
+                case 'js':
+                    return $this->look_for_get_string_js($source);
+                default:
+                    return;
             }
         }
 
         // Loop through the folder.
         $dir = dir($source);
-        while (false !== $entry = $dir->read()) {
+        while (false !== ($entry = $dir->read())) {
             // Skip pointers and third party libraries.
-            if ($entry == '.' || $entry == '..' || $this->exclude($entry)) {
+            if ($entry == '.' || $entry == '..' || $this->exclude("$source/$entry")) {
                 continue;
             }
 
@@ -242,15 +256,13 @@ class missing_strings {
         foreach ($matches[1] as $string) {
             $parts = explode(',', $string);
 
-            if (count($parts) < 2) {
-                continue;
-            }
+            $parts[1] ??= 'moodle';
 
             $identifier = clean_param(trim($parts[0]), PARAM_STRINGID);
             $component = clean_param(trim($parts[1]), PARAM_COMPONENT);
 
             if ($component == $this->component) {
-                $this->check_string_exist($identifier);
+                $this->check_string_exist($identifier, $component);
             }
         }
     }
@@ -338,20 +350,68 @@ class missing_strings {
         $filecontents = file_get_contents($file);
 
         // Regular expression to match get_string() and lang_string() calls.
-        $pattern = '/(get_string|new\s+lang_string)\s*\(\s*[\'"]([^\'"]+)[\'"]\s*,\s*[\'"]([^\'"]+)[\'"]\s*/';
+        $pattern = '/(get_string|new\s+lang_string|->string_for_js)\s*\(\s*[\'"]([^\'"]+)[\'"](?:\s*,\s*([^)\s]+))?/';
 
         // Search for every function call and extract $identifier and $component.
         preg_match_all($pattern, $filecontents, $matches, PREG_SET_ORDER);
-
         foreach ($matches as $match) {
-            // Don't look for other component or dynamic keys.
-            if ($match[3] !== $this->component || strstr($match[2], '$')) {
+            $key = $match[2];
+            $component = $match[3] ?? null;
+
+            if (str_contains($key, '$')) {
                 continue;
             }
 
-            $this->check_string_exist($match[2]);
+            // Clean trailing characters from component (like closing parenthesis or comma).
+            if ($component !== null) {
+                $component = rtrim($component, ")\t\n\r\0\x0B,");
+            }
+
+            // Skip if component is dynamic (not a quoted string literal).
+            if ($component !== null && !preg_match('/^[\'"]([^\'"]+)[\'"]$/', $component)) {
+                continue;
+            }
+
+            // Strip quotes if present.
+            $component = $component ? trim($component, "'\"") : 'moodle';
+
+            $this->check_string_exist($key, $component);
         }
+
         $this->look_for_help_button($filecontents);
+    }
+
+    /**
+     * Search for missing strings inside js files.
+     * @param string $file
+     * @return void
+     */
+    protected function look_for_get_string_js($file) {
+        $filecontents = file_get_contents($file);
+
+        // 1. Match direct calls like getString('key', 'component').
+        $pattern = '/\b(get_string|getString|prefetchString)\s*\(\s*[\'"]([^\'"]+)[\'"](?:\s*,\s*[\'"]([^\'"]+)[\'"])?/';
+        preg_match_all($pattern, $filecontents, $matches, PREG_SET_ORDER);
+
+        foreach ($matches as $match) {
+            $this->check_string_exist($match[2], $match[3] ?? 'core');
+        }
+
+        // 2. Match object-style calls like getStrings([{key: 'yes', component: 'core'}]).
+        $pattern = '/\b(getStrings|get_strings)\s*\(\s*\[(.*?)\]\s*\)/s';
+        preg_match_all($pattern, $filecontents, $arraymatches, PREG_SET_ORDER);
+
+        foreach ($arraymatches as $request) {
+            $arraycontent = $request[2];
+
+            // Now extract { key: '...', component: '...' } objects from array content.
+            $pattern = '/\{\s*key\s*:\s*[\'"]([^\'"]+)[\'"](?:\s*,\s*component\s*:\s*[\'"]([^\'"]+)[\'"])?\s*\}/';
+            preg_match_all($pattern, $arraycontent, $objectmatches, PREG_SET_ORDER);
+
+            foreach ($objectmatches as $match) {
+                $this->check_string_exist($match[1], $match[2] ?? 'core');
+            }
+        }
     }
 
     /**
@@ -368,12 +428,13 @@ class missing_strings {
 
         foreach ($matches as $match) {
             // Don't look for other components or dynamic keys.
-            if ($match[3] !== $this->component || strstr($match[2], '$')) {
+            if (strstr($match[2], '$')) {
                 continue;
             }
 
-            $this->check_string_exist($match[2] . "_help");
-            $this->check_string_exist($match[2]);
+            $match[3] ??= 'moodle';
+            $this->check_string_exist($match[2] . "_help", $match[3]);
+            $this->check_string_exist($match[2], $match[3]);
         }
     }
 }
