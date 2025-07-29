@@ -24,8 +24,12 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
+
+
 $string['addmore'] = 'Add more';
 $string['advancebackup'] = 'Advanced backup options';
+
+
 $string['backup_confirm'] = 'Your are about to create backup for the selected type of backup and download it as a zip file, this will take some time and get downloaded automatically after it.';
 $string['backup_database_tables'] = 'Backup database records';
 $string['backup_file_warning'] = 'WARNING! This action will change the content of the file {$a} Make sure you have a backup from it';
@@ -48,6 +52,9 @@ Files: all moodle data saved files in the system except draft and assignment fee
 $string['backupfileslist'] = 'Backup files list';
 $string['backups'] = 'Backup plugins, files or database records.';
 $string['backuptime'] = 'Backup time';
+$string['bulkresetcourses'] = 'Bulk reset courses';
+
+
 $string['cannot_write_file'] = 'Error while try to write the lang file';
 $string['cap_edit'] = 'Edit capabilities on access.php file';
 $string['cap_edit_component'] = 'Edit capabilities for component ({$a})';
@@ -60,6 +67,8 @@ $string['chunksize'] = 'Chunk size';
 $string['chunksize_help'] = 'The max size of the output chunks (zip files) as if the backed up data exceeds this size it will divided into several files.';
 $string['clonepermissionsfrom'] = 'Clone permission from:';
 $string['contextlevel'] = 'Context Level';
+
+
 $string['def_copyright'] = 'Default copyright for new files';
 $string['def_copyright_desc'] = 'If you left it empty the name of the editing user and email will be put by default.';
 $string['def_license'] = 'Default license for new file';
@@ -73,14 +82,31 @@ $string['developerwarning'] = 'This page could change the plugin file content or
 $string['devtools'] = 'Developer Assistant Tools';
 $string['download'] = 'Download';
 $string['downloadfile'] = 'Download {$a}';
+
+
 $string['editpluginserverfiles'] = 'Edit plugin php files';
+$string['enabledevtools'] = 'Enable developer tools';
+$string['enabledevtools_desc'] = 'Enable the access to development pages, this must be enabled only if you are a developer and know the risks.<br />
+The developer tools available:
+<ul>
+<li>Language string sorter</li>
+<li>Search for missing language strings</li>
+<li>Edit access file</li>
+<li>Test a php code</li>
+<li>Edit plugins files</li>
+</ul>';
+$string['enabledevtools_error'] = 'Access to this page is denied untill developer tools option is enables in the plugin setting.';
 $string['evaluatephpcode'] = 'Evaluate a php code';
+
+
 $string['file_edit_error'] = 'Error while try to edit the file';
 $string['file_edit_success'] = 'File edited successfully';
 $string['filename'] = 'File name';
 $string['filesize'] = 'File size';
 $string['fileupdated'] = 'The file {$a->file} has been updated successfully.
 A backup file generated in {$a->backup}';
+
+
 $string['ignoredfileareas'] = 'Ignored file areas';
 $string['ignoredfileareas_help'] = 'Write down the list of fileareas to be ignored (This should match that in both backups of db tables and files) each in separate line
 <br>each line contain:
@@ -95,22 +121,36 @@ $string['ignoredfileareas_help'] = 'Write down the list of fileareas to be ignor
 $string['ignoredtables'] = 'Ignored database tables';
 $string['ignoredtables_help'] = 'Database tables to be ignored in the backup process.';
 $string['instruction'] = 'Instructions';
+
+
 $string['lang_sorter'] = 'Language strings sorter';
 $string['language'] = 'Language';
 $string['language_help'] = 'Select the language required to search the lang strings, WARNING you should search for the English language first';
 $string['letters_spaces'] = 'Add line spaces between different letters';
+
+
 $string['maintenance_warning'] = 'When the process started the site will enter the maintenance mode and will return after completion, the process may take a long time. Make sure to not interrupt the process by closing the window or refreshing it.';
 $string['missing_lang_strings'] = 'Search for missing language string and make a local translation';
 $string['missing_strings'] = 'Missing strings for component ({$a})';
+
+
 $string['no_missing_strings'] = 'No missing strings for component ({$a})';
 $string['nobackupfiles'] = 'No backed up files found';
 $string['numberofchunks'] = 'Number of parts';
+
+
+$string['othercomponentmissingstring'] = 'The string identifier \'{$a->identifier}\' in another component \'{$a->component}\' is missing and called from this component {$a->currentcomponent}.';
+
+
 $string['plugin_backup_confirm'] = 'Your are about to create backup of all additional plugins and download it as a zip file, this will take some time and downloaded automatically after it.';
 $string['plugin_type'] = 'Plugin type';
 $string['pluginname'] = 'Developer  Assist';
 $string['plugins_backup'] = 'Plugins backup';
 $string['privacy:metadata'] = 'The Developer assist plugin does not store any personal data.';
+
+
 $string['read'] = 'Capability Read';
+$string['resetcourses'] = 'Reset courses';
 $string['restore'] = 'Restore';
 $string['restore_database_tables'] = 'Restore database records';
 $string['restore_database_tables_help'] = 'In order to restore database records, the moodle installation should be new and has no records added already, if the table not exist it will not be restored as this tool restores records only.
@@ -124,10 +164,16 @@ $string['restore_type'] = 'What to restore?';
 $string['restore_type_help'] = 'Select what you want to restore and it should match ';
 $string['restorefromzipfile'] = 'Restore from zip file';
 $string['riskbitunmask'] = 'Risks';
+
+
 $string['search_missing_strings'] = 'Select component to look for missing strings';
 $string['string_files_nothing'] = 'No lang files found for component {$a} or there is no permission to read or write these files';
 $string['string_files_success'] = 'Language files successfully sorted:';
 $string['strings_added_success'] = '{$a} strings added successfully.';
+
+
 $string['uploadzipfile'] = 'Upload zip file {$a}';
 $string['uploadzipfile_help'] = 'The uploaded zip file should be created by the same plugin during the backup process.';
+
+
 $string['write'] = 'Capability Write';
