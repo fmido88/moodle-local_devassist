@@ -37,7 +37,7 @@ if ($hassiteconfig) {
     $reset = new admin_externalpage(
         'local_devassist_resetcourses',
         get_string('bulkresetcourses', 'local_devassist'),
-        new moodle_url('/local/devassist/resetcourses'),
+        new moodle_url('/local/devassist/resetcourses.php'),
     );
     $ADMIN->add('local_devassist_pages', $reset);
 
@@ -58,6 +58,14 @@ if ($hassiteconfig) {
     $ADMIN->add('local_devassist_pages', $restore);
 
     if (local_devassist\common::check_developer_tools_enabled(false)) {
+        // File manager.
+        $filemanager = new admin_externalpage(
+            'local_devassist_filemanager',
+            get_string('filemanager', 'local_devassist'),
+            new moodle_url('/local/devassist/filemanager.php')
+        );
+        $ADMIN->add('local_devassist_pages', $filemanager);
+
         // Lang string sorter.
         $langsorter = new admin_externalpage(
             'local_devassest_lang_sorter',

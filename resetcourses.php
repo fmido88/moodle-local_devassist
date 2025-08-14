@@ -22,6 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+define('NO_OUTPUT_BUFFER', true);
 require_once('../../config.php');
 
 require_login(null, false);
@@ -42,6 +43,10 @@ if ($form->is_cancelled()) {
 if ($data = $form->get_data()) {
     $statuses = [];
 
+    core_php_time_limit::raise();
+    raise_memory_limit(MEMORY_HUGE);
+
+    $courses = $data->courses;
     foreach ($courses as $courseid) {
         $data->id = $data->courseid = $courseid;
 

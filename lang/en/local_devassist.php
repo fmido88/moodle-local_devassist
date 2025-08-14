@@ -101,6 +101,7 @@ $string['evaluatephpcode'] = 'Evaluate a php code';
 
 $string['file_edit_error'] = 'Error while try to edit the file';
 $string['file_edit_success'] = 'File edited successfully';
+$string['filemanager'] = 'File manager';
 $string['filename'] = 'File name';
 $string['filesize'] = 'File size';
 $string['fileupdated'] = 'The file {$a->file} has been updated successfully.

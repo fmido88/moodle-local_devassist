@@ -54,6 +54,8 @@ class reset_courses extends \course_reset_form {
             $options[$course->id] = $category->get_nested_name(false) . ': ' . $coursename;
         }
 
+        asort($options);
+
         if (empty($options)) {
             throw new \moodle_exception('nopermissiontoaccesspage');
         }

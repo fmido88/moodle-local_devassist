@@ -10,6 +10,10 @@ Developer Assistance provides several tools helping developers
     * Files: Create a backup of all files stored in moodle system and download it as a single zip file.
 - Restore:
     * Restore plugins, database records and files that has been backed up by the same plugin in another moodle installation.
+- Bulk reset course.
+    * Rest courses in bulk from one page.
+- File manager:
+    * File manager for server files.
 - Missing language strings and local translation:
     * Searching all php files for any missing lang strings and easily adding them to lang files.
     * Also this tool is excellent to create local translation files for other languages.
