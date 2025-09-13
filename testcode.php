@@ -42,6 +42,9 @@ $code = optional_param('code', null, PARAM_RAW);
 $output = '';
 
 if ($code) {
+    /**
+     * @var moodle_transaction
+     */
     $tr = $DB->start_delegated_transaction();
 
     try {
@@ -58,7 +61,11 @@ if ($code) {
         $output .= ob_get_clean();
     } catch (Throwable $e) {
         try {
-            $tr->rollback($e);
+            try {
+                $tr->rollback($e);
+            } catch (Throwable $de) {
+                // Ignore.
+            }
             // Shouldn't be reached.
             $output .= local_devassist_test_exception_handler($e);
         } catch (Throwable $e) {

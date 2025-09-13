@@ -186,6 +186,17 @@ class missing_strings {
             if (!isset($this->strman)) {
                 $this->strman = get_string_manager(true);
             }
+
+            if ($key !== clean_param($key, PARAM_STRINGID)) {
+                debugging("Invalid string key '$key'");
+                return;
+            }
+
+            if ($component !== clean_param($component, PARAM_COMPONENT)) {
+                debugging("Invalid component '$component'");
+                return;
+            }
+
             $exist = $this->strman->string_exists($key, $component);
         }
 

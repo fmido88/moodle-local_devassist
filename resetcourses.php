@@ -21,6 +21,7 @@
  * @copyright  2025 Mohammad Farouk <phun.for.physics@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+use local_devassist\task\reset_courses;
 
 define('NO_OUTPUT_BUFFER', true);
 require_once('../../config.php');
@@ -41,81 +42,21 @@ if ($form->is_cancelled()) {
 }
 
 if ($data = $form->get_data()) {
-    $statuses = [];
+    $task = new reset_courses();
+    $task->set_custom_data($data);
+    $task->set_userid($USER->id);
 
-    core_php_time_limit::raise();
-    raise_memory_limit(MEMORY_HUGE);
+    $result = core\task\manager::queue_adhoc_task($task);
 
-    $courses = $data->courses;
-    foreach ($courses as $courseid) {
-        $data->id = $data->courseid = $courseid;
-
-        $coursecontext = context_course::instance($courseid);
-        $course        = get_course($courseid);
-        $coursename    = format_string($course->fullname, true, ['context' => $coursecontext]);
-
-        if (!has_capability('moodle/course:reset', $coursecontext)) {
-            $error      = get_string('nopermissions', 'error') . ' ' . $coursename;
-            $statuses[] = [
-                'status'     => [],
-                'coursename' => $OUTPUT->notification($error, core\notification::ERROR, false),
-            ];
-            continue;
-        }
-
-        $data->reset_start_date_old = $course->startdate;
-        $data->reset_end_date_old   = $course->enddate;
-
-        $statuses[] = [
-            'status'     => reset_course_userdata($data),
-            'coursename' => $coursename,
-        ];
-    }
+    echo '<pre>';
+    var_dump($result);
+    echo '</pre>';
+    die;
+    $msg = get_string('restcoursesqueued', 'local_devassist');
+    redirect($url, $msg);
 }
 
 echo $OUTPUT->header();
-
-if (!empty($statuses)) {
-    $table        = new html_table();
-    $table->head  = [
-        get_string('resetcomponent'),
-        get_string('resettask'),
-        get_string('resetstatus'),
-    ];
-    $table->size  = ['20%', '40%', '40%'];
-    $table->align = ['left', 'left', 'left'];
-    $table->width = '80%';
-
-    foreach ($statuses as $status) {
-        $data = [];
-
-        if (!empty($status['status'])) {
-            echo $OUTPUT->heading($status['coursename'], 3);
-        } else {
-            echo $status['coursename'];
-        }
-
-        foreach ($status['status'] as $item) {
-            $line   = [];
-            $line[] = $item['component'];
-            $line[] = $item['item'];
-            $line[] = ($item['error'] === false) ? get_string('statusok')
-                      : '<div class="notifyproblem">' . $item['error'] . '</div>';
-            $data[] = $line;
-        }
-
-        if (!empty($data)) {
-            $table->data = $data;
-            echo html_writer::table($table);
-        }
-
-        echo html_writer::empty_tag('hr');
-    }
-
-    echo html_writer::link($url, get_string('continue'), ['class' => 'btn btn-primary']);
-    echo $OUTPUT->footer();
-    die();
-}
 
 $form->load_defaults();
 
