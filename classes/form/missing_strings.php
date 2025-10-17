@@ -179,8 +179,8 @@ class missing_strings extends \moodleform {
         $pluginman = core_plugin_manager::instance();
         $info = $pluginman->get_plugin_info($fullcomponent);
         $lang = $this->lang;
-        $filepath = "$info->rootdir/lang/$lang/$fullcomponent.php";
-        check_dir_exists($info->rootdir . "/lang/" . $lang);
+        $filepath = "{$info->rootdir}/lang/{$lang}/{$fullcomponent}.php";
+        check_dir_exists("{$info->rootdir}/lang/{$lang}");
 
         if (file_exists($filepath)) {
             $content = file_get_contents($filepath);
@@ -192,7 +192,7 @@ class missing_strings extends \moodleform {
         }
 
         $content = str_replace(PHP_EOL, "\n", $content);
-        $content .= "" . "\n";
+        $content .= "\n";
 
         $i = 0;
         foreach ($data as $key => $value) {

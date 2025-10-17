@@ -97,12 +97,16 @@ class missing_strings {
 
         $this->rootpath = $this->info->rootdir;
 
-        $this->special = [
-            'access'   => $this->rootpath . "/db/access.php",
-            'caches'   => $this->rootpath . "/db/caches.php",
-            'messages' => $this->rootpath . "/db/messages.php",
-            'privacy'  => $this->rootpath . "/classes/privacy/provider.php",
+        $special = [
+            'access'   => "/db/access.php",
+            'caches'   => "/db/caches.php",
+            'messages' => "/db/messages.php",
+            'privacy'  => "/classes/privacy/provider.php",
         ];
+
+        $this->special = array_map(function($entry)  {
+            return "{$this->rootpath}{$entry}";
+        }, $special);
 
         $langfile = $this->rootpath . "/lang/$lang/{$this->component}.php";
 
@@ -121,15 +125,6 @@ class missing_strings {
             foreach ($thirdparty->xpath('/libraries/library/location') as $location) {
                 $this->exclude[] = $this->rootpath . "/$location";
             }
-        }
-    }
-
-    /**
-     * Destruct the class and unset every thing.
-     */
-    public function close() {
-        foreach ($this as $property) {
-            unset($property);
         }
     }
 

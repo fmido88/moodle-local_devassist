@@ -16,6 +16,8 @@
 
 namespace local_devassist\local\backup;
 
+use core\exception\coding_exception;
+use core\exception\moodle_exception;
 use core_plugin_manager;
 
 /**
@@ -30,9 +32,8 @@ class backup_plugins extends backup_base {
      * Excluded list of plugins.
      * @var string[]
      */
-    protected array $excluded = [
-        'local_devassist',
-    ];
+    protected array $excluded = [];
+
     #[\Override]
     public function backup() {
         global $CFG;
@@ -79,6 +80,12 @@ class backup_plugins extends backup_base {
         $this->trace("$count plugins has been added.");
     }
 
+    public function exclude_plugin(string $component) {
+        if (clean_param($component, PARAM_COMPONENT) !== $component) {
+            throw new coding_exception("Invalid component $component");
+        }
+        $this->excluded = array_unique(array_merge($this->excluded, [$component]));
+    }
     /**
      * Recursively add files of a given plugin to the list of files to be added to the zip archive.
      *
@@ -94,10 +101,14 @@ class backup_plugins extends backup_base {
             return true;
         }
 
+        if (str_ends_with($source, '.git') || str_ends_with($source, 'node_modules')) {
+            return true;
+        }
+
         // Loop through the folder.
         $dir = dir($source);
 
-        while (false !== $entry = $dir->read()) {
+        while (false !== ($entry = $dir->read())) {
             // Skip pointers.
             if ($entry == '.' || $entry == '..') {
                 continue;

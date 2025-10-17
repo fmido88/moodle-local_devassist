@@ -209,6 +209,13 @@ abstract class backup_base extends backup_restore_base {
         return str_replace($base, '', $fullpath);
     }
 
+    public function get_files_ready_to_archive() {
+        if (empty($this->tozipfiles)) {
+            debugging('No files to archive, the method ::backup should be called first.', DEBUG_DEVELOPER);
+        }
+
+        return $this->tozipfiles;
+    }
     /**
      * Zipping the files needed for backup in a single file.
      * @return bool

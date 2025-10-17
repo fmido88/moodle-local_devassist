@@ -75,10 +75,11 @@ if ($data = $mform->get_data()) {
         $firstletter = 0;
         foreach ($string as $key => $value) {
             if ($spaces && stripos($key, $firstletter) !== 0) {
-                $file .= "\n" . "\n";
+                $file .= "\n";
                 $firstletter = $key[0];
             }
-            $file .= '$string[\''.$key.'\'] = \''.str_replace('\'', '\\\'', $value).'\';' . "" . "\n";
+            $value = str_replace('\'', '\\\'', $value);
+            $file .= "\$string['{$key}'] = '{$value}';\n";
         }
 
         $file = str_replace(["\n ", " \n", " ". PHP_EOL, PHP_EOL . " ", PHP_EOL], "\n", $file);
