@@ -18,6 +18,7 @@ namespace local_devassist\local\restore;
 
 use csv_import_reader;
 use local_devassist\local\backup\backup_database_tables;
+use ReflectionMethod;
 use xmldb_table;
 
 defined('MOODLE_INTERNAL') || die();
@@ -120,7 +121,7 @@ class restore_database_tables extends restore_base {
                 }
             } else if ($entry === 'tables.json') {
                 $dir->close();
-                return $this->get_the_old_tables_list($entry);
+                return $this->get_the_old_tables_list($newpath);
             }
         }
         $dir->close();
@@ -190,14 +191,24 @@ class restore_database_tables extends restore_base {
         // Dropping the table records.
         $deleted = $DB->count_records($tablename);
         $DB->delete_records($tablename);
+        $errors = [];
         while ($row = $cir->next()) {
             $this->parse_records($row, $columns, $tablecolumns);
 
-            $DB->import_record($tablename, (object)$row);
-            $inserted++;
+            try {
+                $DB->insert_record_raw($tablename, (object)$row, false, true, true);
+                $inserted++;
+            } catch (\dml_write_exception $e) {
+                $errors[] = $e->getMessage() . '  ' . ob_get_clean();
+            }
         }
 
-        $msg = "The table $tablename has been restored, ";
+        $msg = '';
+        if (!empty($errors)) {
+            $msg .= implode('<br>', $errors) . '<br>';
+            die;
+        }
+        $msg .= "The table $tablename has been restored, ";
         $msg .= "The already existed records $deleted record has been deleted and $inserted records restored.";
         $this->trace($msg, 2);
 
@@ -218,20 +229,24 @@ class restore_database_tables extends restore_base {
      * @return void
      */
     protected function parse_records(&$row, $columns, $tablecolumns) {
+        global $DB;
         $newrow = [];
 
         foreach ($row as $k => $v) {
             if (!isset($columns[$k])) {
+                $this->trace("The data with order {$k} not have corresponding column in csv file.");
                 continue;
             }
 
             $columnname = $columns[$k];
             // Skip unknown table columns.
             if (!isset($tablecolumns[$columnname])) {
+                $this->trace("The table columns not contain the column $columnname");
                 continue;
             }
 
             $columninfo = $tablecolumns[$columnname];
+
 
             // Convert empty strings to null if column is not text-based.
             if ($v === '') {
@@ -240,13 +255,14 @@ class restore_database_tables extends restore_base {
                 } else if (!$columninfo->not_null) {
                     $v = null;
                 }
+            } else if ($v !== null && \in_array($columninfo->meta_type, ['I', 'N'])) {
+                $v = trim($v, " \n\r\t\v\x00'");
+                $v = (int)$v;
             }
 
-            // Optionally cast types (e.g., integers) if needed.
-            if (is_numeric($v) && in_array($columninfo->meta_type, ['I', 'N'])) {
-                $v = (int) $v;
-            }
-
+            $normalise = new ReflectionMethod($DB, 'normalise_value');
+            $normalise->setAccessible(true);
+            $v = $normalise->invoke($DB, $columninfo, $v);
             $newrow[$columnname] = $v;
         }
 
