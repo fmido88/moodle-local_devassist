@@ -101,7 +101,8 @@ class backup_plugins extends backup_base {
             return true;
         }
 
-        if (str_ends_with($source, '.git') || str_ends_with($source, 'node_modules')) {
+        if ((!\defined('LOCAL_DEVASSIST_DEVENV') || !LOCAL_DEVASSIST_DEVENV)
+            && (str_ends_with($source, '.git') || str_ends_with($source, 'node_modules'))) {
             return true;
         }
 
