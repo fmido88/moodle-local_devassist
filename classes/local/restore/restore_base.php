@@ -110,34 +110,39 @@ abstract class restore_base extends backup_restore_base {
         $fs      = get_file_storage();
         $context = \context_user::instance($USER->id);
 
-        while ($content = $this->get_file_content($i)) {
-            $tempdir   = static::get_temp_dir(true);
-            $thingname = $this->get_supdir_name();
-            $filename  = "{$tempdir}/{$thingname}{$i}.zip";
-            $filename  = self::fix_directory_separator($filename);
-            file_put_contents($filename, $content);
-
-            // Cleanup.
-            unset($content);
+        $chunkcontents = [];
+        while (($content = $this->get_file_content($i)) !== null) {
+            $chunkcontents[] = $content;
             $draftid = @$submitteddata->{"zipfile$i"};
-
             if ($draftid) {
                 $fs->delete_area_files($context->id, 'user', 'draft', $draftid);
             }
-
-            $zip      = new zip_packer();
-            $progress = null;
-
-            if ($this->printprogress) {
-                $progress = new zip_progress(-1, $this->trace, 'extract');
-            }
-
-            $zip->extract_to_pathname($filename, static::get_unzip_location(), null, $progress);
-
-            if ($this->deleteoriginal) {
-                @unlink($filename);
-            }
             $i++;
+        }
+
+        $tempdir = static::get_temp_dir(true);
+        $thingname = $this->get_supdir_name();
+        $fullzipfilename = $tempdir . DIRECTORY_SEPARATOR . $thingname . '_full_restored.zip';
+        $fullzipfilename = self::fix_directory_separator($fullzipfilename);
+
+        if (count($chunkcontents) === 1) {
+            // Single file
+            file_put_contents($fullzipfilename, $chunkcontents[0]);
+        } else {
+            // Multiple chunks: merge
+            $this->trace('Merging ' . count($chunkcontents) . ' chunks into full archive...');
+            $fullcontent = implode('', $chunkcontents);
+            file_put_contents($fullzipfilename, $fullcontent);
+        }
+
+        $zip = new zip_packer();
+        $progress = $this->printprogress ? new zip_progress(-1, $this->trace, 'extract') : null;
+        $zip->extract_to_pathname($fullzipfilename, static::get_unzip_location(), null, $progress);
+
+        $this->zipfiles[] = $fullzipfilename;
+
+        if ($this->deleteoriginal) {
+            @unlink($fullzipfilename);
         }
 
         // Check if the extracted zip file contains another zip files.

@@ -216,6 +216,86 @@ abstract class backup_base extends backup_restore_base {
 
         return $this->tozipfiles;
     }
+
+    /**
+     * Create single full archive then split into binary chunks.
+     * This divides the WHOLE archived ZIP file into fixed-size chunks.
+     * 
+     * @param array $tozipfiles
+     * @param int $chunksize
+     * @param string $basetemp
+     * @param \zip_packer $packer
+     * @param string $ds
+     * @return void
+     */
+    protected function create_full_archive_and_split(array $tozipfiles, int $chunksize, string $basetemp, \zip_packer $packer, string $ds): void {
+        $thing = static::get_supdir_name();
+        $bigzip = $basetemp . $ds . $thing . '_full_' . time() . '.zip';
+
+        $this->trace('Creating full archive...');
+        $progress = $this->trace ? new \local_devassist\local\zip_progress(count($tozipfiles), $this->trace) : null;
+        $result = $packer->archive_to_pathname($tozipfiles, $bigzip, false, $progress);
+
+        if (!$result) {
+            $this->trace('Failed to create full archive');
+            return;
+        }
+
+        $this->trace('Splitting full archive into chunks...');
+        $this->archivedzips = $this->split_file_into_chunks($bigzip, $chunksize, $basetemp, $ds, $thing);
+        @unlink($bigzip);
+    }
+
+    /**
+     * Binary split a file into fixed-size chunks.
+     * 
+     * @param string $bigfile
+     * @param int $chunksize
+     * @param string $basetemp
+     * @param string $ds
+     * @param string $thing
+     * @return string[]
+     */
+    protected function split_file_into_chunks(string $bigfile, int $chunksize, string $basetemp, string $ds, string $thing): array {
+        $handle = fopen($bigfile, 'rb');
+        if (!$handle) {
+            return [];
+        }
+
+        $parts = [];
+        $partnum = 0;
+        $now = time();
+
+        while (!feof($handle)) {
+            $partname = "{$thing}_{$now}_chunk_" . str_pad($partnum, 4, '0', STR_PAD_LEFT) . '.zip';
+            $partpath = $basetemp . $ds . $partname;
+            $part = fopen($partpath, 'wb');
+            
+            if (!$part) {
+                continue;
+            }
+
+            $written = 0;
+            while ($written < $chunksize && !feof($handle)) {
+                $data = fread($handle, min(8192, $chunksize - $written));
+                if ($data === false) {
+                    break;
+                }
+                fwrite($part, $data);
+                $written += strlen($data);
+            }
+
+            fclose($part);
+            if (filesize($partpath) > 0) {
+                $parts[] = $partpath;
+                $this->trace("Created chunk: $partname (" . filesize($partpath) . ")");
+            }
+            $partnum++;
+        }
+
+        fclose($handle);
+        return $parts;
+    }
     /**
      * Zipping the files needed for backup in a single file.
      * @return bool
@@ -237,58 +317,7 @@ abstract class backup_base extends backup_restore_base {
             $chunksize = PHP_INT_MAX;
         }
 
-        // Step 1: Estimate sizes and split into chunks.
-        $currentbatch = [];
-        $currentbytes = 0;
-        $allbatches   = [];
-
-        foreach ($this->tozipfiles as $relpath => $fullpath) {
-            $size = filesize($fullpath);
-
-            // If file alone exceeds limit, force it into its own zip.
-            if ($size > $chunksize) {
-                if (!empty($currentbatch)) {
-                    $allbatches[] = $currentbatch;
-                    $currentbatch = [];
-                    $currentbytes = 0;
-                }
-                $allbatches[] = [$relpath => $fullpath];
-                continue;
-            }
-
-            if ($currentbytes + $size > $chunksize) {
-                $allbatches[] = $currentbatch;
-                $currentbatch = [];
-                $currentbytes = 0;
-            }
-
-            $currentbatch[$relpath] = $fullpath;
-            $currentbytes += $size;
-        }
-
-        // Add last batch.
-        if (!empty($currentbatch)) {
-            $allbatches[] = $currentbatch;
-        }
-
-        // Step 2: Archive each batch.
-        $this->archivedzips = [];
-
-        foreach ($allbatches as $i => $batchfiles) {
-            $zipname = self::format_chunk_name($i);
-            $zippath = "{$basetemp}{$ds}{$zipname}";
-
-            $this->trace("Creating archive: {$zipname}");
-
-            $progress = $this->trace ? new zip_progress(count($batchfiles), $this->trace) : null;
-            $done     = $packer->archive_to_pathname($batchfiles, $zippath, false, $progress);
-
-            if ($done) {
-                $this->archivedzips[] = $zippath;
-            } else {
-                debugging("Failed to create archive {$zippath}", DEBUG_DEVELOPER);
-            }
-        }
+        $this->create_full_archive_and_split($this->tozipfiles, $chunksize, $basetemp, $packer, $ds);
 
         $bundling = get_config('local_devassist', 'bundle_archive');
 
@@ -351,10 +380,10 @@ abstract class backup_base extends backup_restore_base {
             return;
         }
 
-        // Find all zip files matching "thing_*.zip".
+// Find all chunk part files matching "thing_*chunk*.zip" or zip files.
         $tempdir = static::get_temp_dir(true);
         $thing   = static::get_supdir_name();
-        $files   = glob($tempdir . DIRECTORY_SEPARATOR . $thing . '_*.zip');
+        $files   = glob($tempdir . DIRECTORY_SEPARATOR . $thing . '_*chunk*.zip') ?: glob($tempdir . DIRECTORY_SEPARATOR . $thing . '_*.zip');
 
         if (empty($files)) {
             echo 'No archive zip files found.';
@@ -492,11 +521,11 @@ abstract class backup_base extends backup_restore_base {
      */
     public function get_chunk_size(): int {
         if ($this->chunksize >= 0) {
-            return $this->chunksize;
+            return $this->chunksize - 2048;
         }
         $this->chunksize = self::get_max_upload_size();
 
-        return $this->chunksize;
+        return $this->chunksize - 2048;
     }
 
     /**
