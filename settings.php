@@ -116,7 +116,7 @@ if ($hassiteconfig) {
         get_string('def_copyright', 'local_devassist'),
         get_string('def_copyright_desc', 'local_devassist'),
         '',
-        PARAM_TEXT
+        PARAM_RAW_TRIMMED
     ));
 
     $settings->add(new admin_setting_configtext(
