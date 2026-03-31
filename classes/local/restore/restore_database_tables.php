@@ -252,7 +252,11 @@ class restore_database_tables extends restore_base {
             if ($v === '') {
                 if (in_array($columninfo->meta_type, ['I', 'R', 'N', 'L'])) {
                     $v = $columninfo->not_null ? 0 : null;
-                } else if (!$columninfo->not_null) {
+                } else if (!$columninfo->not_null && $columninfo->type !== 'longtext') {
+                    // Excluding longtext fields is because some text fields like
+                    // course summary and category description and causing errors
+                    // when these records get retrieve these fields only from
+                    // core_renderer or course_list_element.
                     $v = null;
                 }
             } else if ($v !== null && \in_array($columninfo->meta_type, ['I', 'N'])) {
